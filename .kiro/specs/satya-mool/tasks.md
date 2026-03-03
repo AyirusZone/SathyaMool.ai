@@ -8,7 +8,7 @@ The implementation follows a bottom-up approach: infrastructure → backend serv
 
 ## Tasks
 
-- [ ] 1. Set up project structure and infrastructure foundation
+- [x] 1. Set up project structure and infrastructure foundation
   - Create monorepo structure with separate packages for infrastructure (CDK), backend (Lambda functions), and frontend (React)
   - Initialize AWS CDK project with TypeScript
   - Set up DynamoDB tables (Users, Properties, Documents, Lineage, TrustScores, AuditLogs) with GSIs
@@ -18,81 +18,81 @@ The implementation follows a bottom-up approach: infrastructure → backend serv
   - _Requirements: 2.6, 13.1, 13.6, 17.6_
 
 - [ ] 2. Implement authentication and authorization infrastructure
-  - [ ] 2.1 Set up AWS Cognito User Pool with phone and email authentication
+  - [x] 2.1 Set up AWS Cognito User Pool with phone and email authentication
     - Configure Cognito User Pool with phone number and email sign-in
     - Set up SMS and email verification workflows
     - Configure JWT token settings and expiration policies
     - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
-  - [ ] 2.2 Implement Lambda authorizer for API Gateway
+  - [x] 2.2 Implement Lambda authorizer for API Gateway
     - Write Node.js Lambda function to validate JWT tokens
     - Extract and validate role-based claims from tokens
     - Implement role-based access control logic (Standard_User, Professional_User, Admin_User)
     - _Requirements: 1.4, 1.5, 1.6, 1.7_
 
 
-  - [ ]* 2.3 Write unit tests for authentication logic
+  - [x] 2.3 Write unit tests for authentication logic
     - Test JWT validation with valid and expired tokens
     - Test role-based access control enforcement
     - Test error handling for malformed tokens
     - _Requirements: 1.6, 1.7_
 
 - [ ] 3. Implement authentication API endpoints
-  - [ ] 3.1 Create user registration endpoint (POST /v1/auth/register)
+  - [x] 3.1 Create user registration endpoint (POST /v1/auth/register)
     - Write Node.js Lambda to handle phone and email registration
     - Integrate with Cognito User Pool for user creation
     - Implement OTP sending for phone registration
     - Return appropriate success/error responses
     - _Requirements: 1.1, 1.2, 1.3_
 
-  - [ ] 3.2 Create login endpoint (POST /v1/auth/login)
+  - [x] 3.2 Create login endpoint (POST /v1/auth/login)
     - Write Node.js Lambda to authenticate users
     - Issue JWT tokens with role claims
     - Implement token refresh logic
     - Log authentication events to AuditLogs table
     - _Requirements: 1.4, 1.8, 17.1_
 
-  - [ ] 3.3 Create OTP verification endpoint (POST /v1/auth/verify-otp)
+  - [x] 3.3 Create OTP verification endpoint (POST /v1/auth/verify-otp)
     - Write Node.js Lambda to verify phone OTP
     - Complete user registration after successful verification
     - _Requirements: 1.3_
 
-  - [ ] 3.4 Create token refresh endpoint (POST /v1/auth/refresh)
+  - [x] 3.4 Create token refresh endpoint (POST /v1/auth/refresh)
     - Write Node.js Lambda to refresh JWT tokens
     - Validate refresh tokens and issue new access tokens
     - _Requirements: 1.8_
 
-  - [ ]* 3.5 Write integration tests for authentication flow
+  - [x] 3.5 Write integration tests for authentication flow
     - Test complete registration and login flow
     - Test OTP verification workflow
     - Test token refresh mechanism
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.8_
 
-- [ ] 4. Checkpoint - Ensure authentication tests pass
+- [x] 4. Checkpoint - Ensure authentication tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 5. Implement property management API endpoints
-  - [ ] 5.1 Create property creation endpoint (POST /v1/properties)
+- [x] 5. Implement property management API endpoints
+  - [x] 5.1 Create property creation endpoint (POST /v1/properties)
     - Write Node.js Lambda to create new property verification records
     - Generate unique propertyId (UUID)
     - Store property metadata in Properties table
     - Associate property with authenticated user
     - _Requirements: 2.9_
 
-  - [ ] 5.2 Create property listing endpoint (GET /v1/properties)
+  - [x] 5.2 Create property listing endpoint (GET /v1/properties)
     - Write Node.js Lambda to list properties for authenticated user
     - Implement filtering by status and date range
     - Support pagination for large result sets
     - Return property summaries with Trust_Score and status
     - _Requirements: 10.1, 10.2, 10.3_
 
-  - [ ] 5.3 Create property details endpoint (GET /v1/properties/{id})
+  - [x] 5.3 Create property details endpoint (GET /v1/properties/{id})
     - Write Node.js Lambda to retrieve property details
     - Fetch property metadata, document count, and processing status
     - Implement authorization check (user owns property or is admin)
     - _Requirements: 10.1, 10.2_
 
-  - [ ] 5.4 Create property deletion endpoint (DELETE /v1/properties/{id})
+  - [x] 5.4 Create property deletion endpoint (DELETE /v1/properties/{id})
     - Write Node.js Lambda to delete property verification
     - Mark documents for deletion in S3 (lifecycle policy handles actual deletion)
     - Remove metadata from DynamoDB tables

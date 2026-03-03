@@ -1,0 +1,17 @@
+{
+  "name": "satyamool",
+  "version": "1.0.0",
+  "description": "AWS-native serverless platform for Indian property document verification",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "deploy": "npm run deploy -w @satyamool/infrastructure"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

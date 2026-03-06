@@ -28,7 +28,9 @@ const USER_POOL_CLIENT_ID = process.env.USER_POOL_CLIENT_ID!;
 const USERS_TABLE_NAME = process.env.USERS_TABLE_NAME || 'SatyaMool-Users';
 
 interface LoginRequest {
-  username: string; // email or phone number
+  username?: string; // email or phone number
+  email?: string; // alternative to username
+  phoneNumber?: string; // alternative to username
   password: string;
 }
 
@@ -69,8 +71,11 @@ export const handler = async (
 
     const body: LoginRequest = JSON.parse(event.body);
 
+    // Determine username from email, phoneNumber, or username field
+    const username = body.username || body.email || body.phoneNumber;
+
     // Validate input
-    if (!body.username || !body.password) {
+    if (!username || !body.password) {
       return createErrorResponse(
         400,
         'MISSING_CREDENTIALS',
@@ -83,7 +88,7 @@ export const handler = async (
       AuthFlow: 'USER_PASSWORD_AUTH',
       ClientId: USER_POOL_CLIENT_ID,
       AuthParameters: {
-        USERNAME: body.username,
+        USERNAME: username,
         PASSWORD: body.password,
       },
     });
@@ -142,7 +147,7 @@ export const handler = async (
       ipAddress: ipAddress,
       userAgent: userAgent,
       metadata: {
-        username: body.username,
+        username: username,
         role: role,
       },
     });

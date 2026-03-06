@@ -18,7 +18,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::339648407295:role/cdk-hnb659fds-deploy-role-339648407295-ap-south-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::339648407295:role/cdk-hnb659fds-cfn-exec-role-339648407295-ap-south-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-339648407295-ap-south-1/6798839927ded35ff578e245e0e5b739d91663ef76e586e43723f02a5a19ac7a.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-339648407295-ap-south-1/8cd369a8a9a8b4bc8684814036810146a8e5b76990bf94e3facb154e1c2b996c.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -440,6 +440,1134 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "AuditLogsTableName"
+          }
+        ],
+        "/SatyaMoolStack/CognitoConfig/SatyaMoolUserPool/smsRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CognitoConfigSatyaMoolUserPoolsmsRole27D0AD3C"
+          }
+        ],
+        "/SatyaMoolStack/CognitoConfig/SatyaMoolUserPool/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CognitoConfigSatyaMoolUserPool5E37CFF7"
+          }
+        ],
+        "/SatyaMoolStack/CognitoConfig/SatyaMoolUserPool/SatyaMoolWebClient/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CognitoConfigSatyaMoolUserPoolSatyaMoolWebClient3713D2F5"
+          }
+        ],
+        "/SatyaMoolStack/CognitoConfig/UserPoolId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CognitoConfigUserPoolId5FBAA45D"
+          }
+        ],
+        "/SatyaMoolStack/CognitoConfig/UserPoolArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CognitoConfigUserPoolArn91B4B5DA"
+          }
+        ],
+        "/SatyaMoolStack/CognitoConfig/UserPoolClientId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CognitoConfigUserPoolClientIdA26343ED"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/RegisterFunction/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasRegisterFunctionServiceRoleDBA90ADB"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/RegisterFunction/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasRegisterFunctionServiceRoleDefaultPolicy9B21023D"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/RegisterFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasRegisterFunction82FCD0C0"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/RegisterFunction/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasRegisterFunctionLogRetentionD0AD8668"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/LoginFunction/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasLoginFunctionServiceRole1C37D0D1"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/LoginFunction/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasLoginFunctionServiceRoleDefaultPolicy2B0A55F4"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/LoginFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasLoginFunction413AAD28"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/LoginFunction/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasLoginFunctionLogRetentionD8A28C3A"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/VerifyOtpFunction/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasVerifyOtpFunctionServiceRoleB2C7E2FA"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/VerifyOtpFunction/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasVerifyOtpFunctionServiceRoleDefaultPolicyA6A78830"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/VerifyOtpFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasVerifyOtpFunction57511054"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/VerifyOtpFunction/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasVerifyOtpFunctionLogRetentionB3A1FEF4"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/RefreshTokenFunction/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasRefreshTokenFunctionServiceRoleEF4DF110"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/RefreshTokenFunction/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasRefreshTokenFunctionServiceRoleDefaultPolicyAAD61C2D"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/RefreshTokenFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasRefreshTokenFunctionFB755265"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/RefreshTokenFunction/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasRefreshTokenFunctionLogRetention626D5584"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/AuthorizerFunction/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasAuthorizerFunctionServiceRole37E0F877"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/AuthorizerFunction/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasAuthorizerFunctionServiceRoleDefaultPolicyCBADF23B"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/AuthorizerFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasAuthorizerFunction0006C535"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/AuthorizerFunction/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasAuthorizerFunctionLogRetention85C9D577"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/AuthorizerFunction/SatyaMoolStackMainApiGatewayJwtAuthorizerEA846C5D:Permissions": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasAuthorizerFunctionSatyaMoolStackMainApiGatewayJwtAuthorizerEA846C5DPermissionsFD080435"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/RegisterLambdaArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasRegisterLambdaArn1774B498"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/LoginLambdaArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasLoginLambdaArn52336F91"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/VerifyOtpLambdaArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasVerifyOtpLambdaArnDFE56779"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/RefreshTokenLambdaArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasRefreshTokenLambdaArnF84C49E2"
+          }
+        ],
+        "/SatyaMoolStack/AuthLambdas/AuthorizerLambdaArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthLambdasAuthorizerLambdaArn5809B138"
+          }
+        ],
+        "/SatyaMoolStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+          }
+        ],
+        "/SatyaMoolStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB"
+          }
+        ],
+        "/SatyaMoolStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/ApiAccessLogs/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewayApiAccessLogsB7C18179"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApi813CEFFD"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/CloudWatchRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiCloudWatchRole3EA1DA34"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Account": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiAccount68933E8D"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Deployment/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiDeployment3B7B20F6fa5cee77b79dad02e8b2f08990188994"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/DeploymentStage.v1/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiDeploymentStagev13EE573E5"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Endpoint": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiEndpoint3E95D79E"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiOPTIONS466BCCB8"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthBC966808"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthOPTIONS71E7C158"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/register/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthregisterCC247C92"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/register/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthregisterOPTIONS5D96C862"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/register/POST/ApiPermission.SatyaMoolStackAuthApiGatewaySatyaMoolAuthApi4B1BA22D.POST..auth.register": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthregisterPOSTApiPermissionSatyaMoolStackAuthApiGatewaySatyaMoolAuthApi4B1BA22DPOSTauthregisterDD8586A1"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/register/POST/ApiPermission.Test.SatyaMoolStackAuthApiGatewaySatyaMoolAuthApi4B1BA22D.POST..auth.register": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthregisterPOSTApiPermissionTestSatyaMoolStackAuthApiGatewaySatyaMoolAuthApi4B1BA22DPOSTauthregister5CE1C0F0"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/register/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthregisterPOST17F5CC19"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/login/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthlogin59433A1B"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/login/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthloginOPTIONS8014471E"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/login/POST/ApiPermission.SatyaMoolStackAuthApiGatewaySatyaMoolAuthApi4B1BA22D.POST..auth.login": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthloginPOSTApiPermissionSatyaMoolStackAuthApiGatewaySatyaMoolAuthApi4B1BA22DPOSTauthlogin2917DCFD"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/login/POST/ApiPermission.Test.SatyaMoolStackAuthApiGatewaySatyaMoolAuthApi4B1BA22D.POST..auth.login": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthloginPOSTApiPermissionTestSatyaMoolStackAuthApiGatewaySatyaMoolAuthApi4B1BA22DPOSTauthlogin403DD03B"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/login/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthloginPOSTD851FBAB"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/verify-otp/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthverifyotp846D3660"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/verify-otp/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthverifyotpOPTIONSEFC1A293"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/verify-otp/POST/ApiPermission.SatyaMoolStackAuthApiGatewaySatyaMoolAuthApi4B1BA22D.POST..auth.verify-otp": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthverifyotpPOSTApiPermissionSatyaMoolStackAuthApiGatewaySatyaMoolAuthApi4B1BA22DPOSTauthverifyotpAC620849"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/verify-otp/POST/ApiPermission.Test.SatyaMoolStackAuthApiGatewaySatyaMoolAuthApi4B1BA22D.POST..auth.verify-otp": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthverifyotpPOSTApiPermissionTestSatyaMoolStackAuthApiGatewaySatyaMoolAuthApi4B1BA22DPOSTauthverifyotp46FBDB3D"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/verify-otp/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthverifyotpPOST4DB77A42"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/refresh/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthrefresh600C58DF"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/refresh/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthrefreshOPTIONSB81E6C80"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/refresh/POST/ApiPermission.SatyaMoolStackAuthApiGatewaySatyaMoolAuthApi4B1BA22D.POST..auth.refresh": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthrefreshPOSTApiPermissionSatyaMoolStackAuthApiGatewaySatyaMoolAuthApi4B1BA22DPOSTauthrefreshFEC4CE64"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/refresh/POST/ApiPermission.Test.SatyaMoolStackAuthApiGatewaySatyaMoolAuthApi4B1BA22D.POST..auth.refresh": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthrefreshPOSTApiPermissionTestSatyaMoolStackAuthApiGatewaySatyaMoolAuthApi4B1BA22DPOSTauthrefreshC0EC38A9"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default/auth/refresh/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiauthrefreshPOSTE415347E"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/ErrorResponse/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiErrorResponseDACBDEDA"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Unauthorized/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiUnauthorized0461F32A"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Throttled/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiThrottledF165938B"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default4XX/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiDefault4XX3A533012"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/Default5XX/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiDefault5XX6E9EA9F7"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/SatyaMoolAuthApiKey/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiSatyaMoolAuthApiKey752C3121"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/SatyaMoolAuthUsagePlan/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiSatyaMoolAuthUsagePlan1934F70E"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/SatyaMoolAuthApi/SatyaMoolAuthUsagePlan/UsagePlanKeyResource:SatyaMoolStackAuthApiGatewaySatyaMoolAuthApiSatyaMoolAuthApiKey67BDD0AE": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewaySatyaMoolAuthApiSatyaMoolAuthUsagePlanUsagePlanKeyResourceSatyaMoolStackAuthApiGatewaySatyaMoolAuthApiSatyaMoolAuthApiKey67BDD0AE975D6673"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/BodyValidator/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewayBodyValidator7E8BE9C3"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/ApiUrl": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewayApiUrl65315873"
+          }
+        ],
+        "/SatyaMoolStack/AuthApiGateway/ApiId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthApiGatewayApiId9D6306B8"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/CreatePropertyFunction/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasCreatePropertyFunctionServiceRole0F0ECD21"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/CreatePropertyFunction/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasCreatePropertyFunctionServiceRoleDefaultPolicyCDFD37CD"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/CreatePropertyFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasCreatePropertyFunction9027918B"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/CreatePropertyFunction/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasCreatePropertyFunctionLogRetention3E467626"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/ListPropertiesFunction/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasListPropertiesFunctionServiceRoleB9569588"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/ListPropertiesFunction/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasListPropertiesFunctionServiceRoleDefaultPolicyD6839FC8"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/ListPropertiesFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasListPropertiesFunctionDE79A343"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/ListPropertiesFunction/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasListPropertiesFunctionLogRetentionCFF17E51"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GetPropertyFunction/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGetPropertyFunctionServiceRoleE8DE8525"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GetPropertyFunction/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGetPropertyFunctionServiceRoleDefaultPolicy6F554FEC"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GetPropertyFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGetPropertyFunction5084B23C"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GetPropertyFunction/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGetPropertyFunctionLogRetention429F66F2"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/DeletePropertyFunction/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasDeletePropertyFunctionServiceRole95D2A8B2"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/DeletePropertyFunction/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasDeletePropertyFunctionServiceRoleDefaultPolicy4CDEA8FD"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/DeletePropertyFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasDeletePropertyFunction271D92A6"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/DeletePropertyFunction/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasDeletePropertyFunctionLogRetention22684155"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GenerateUploadUrlFunction/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGenerateUploadUrlFunctionServiceRole05AD3B6B"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GenerateUploadUrlFunction/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGenerateUploadUrlFunctionServiceRoleDefaultPolicy58C9CC65"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GenerateUploadUrlFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGenerateUploadUrlFunction890ED462"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GenerateUploadUrlFunction/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGenerateUploadUrlFunctionLogRetention4A9D182E"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/RegisterDocumentFunction/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasRegisterDocumentFunctionServiceRole457446E3"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/RegisterDocumentFunction/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasRegisterDocumentFunctionServiceRoleDefaultPolicyA58E1630"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/RegisterDocumentFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasRegisterDocumentFunctionBEC87576"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/RegisterDocumentFunction/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasRegisterDocumentFunctionLogRetentionE77DBB90"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GetLineageFunction/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGetLineageFunctionServiceRole3BD46C07"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GetLineageFunction/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGetLineageFunctionServiceRoleDefaultPolicyAE435AF8"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GetLineageFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGetLineageFunction88E5F0A9"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GetLineageFunction/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGetLineageFunctionLogRetentionC1234C7B"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GetTrustScoreFunction/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGetTrustScoreFunctionServiceRole73F92B72"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GetTrustScoreFunction/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGetTrustScoreFunctionServiceRoleDefaultPolicy8E4C4F0D"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GetTrustScoreFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGetTrustScoreFunctionA4F61A4A"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GetTrustScoreFunction/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGetTrustScoreFunctionLogRetentionD581C7B2"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GenerateReportFunction/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGenerateReportFunctionServiceRoleED989A21"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GenerateReportFunction/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGenerateReportFunctionServiceRoleDefaultPolicyD5D128AC"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GenerateReportFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGenerateReportFunction3105646E"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GenerateReportFunction/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGenerateReportFunctionLogRetention8E31AC5C"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/ApiAccessLogs/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewayApiAccessLogs4222C686"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiC8F7825B"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/CloudWatchRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiCloudWatchRole9D5A27F9"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Account": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiAccount889BD891"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Deployment/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiDeploymentCB4C84D7ecfc58d5a487460896597c63b63b44a4"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/DeploymentStage.v1/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiDeploymentStagev17310331D"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Endpoint": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiEndpoint05D22192"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiOPTIONSA945E8A1"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthDB9EF529"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthOPTIONS98D69CF1"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/register/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthregisterE07A9732"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/register/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthregisterOPTIONS979A77BC"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/register/POST/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..auth.register": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthregisterPOSTApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTauthregister67119466"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/register/POST/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..auth.register": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthregisterPOSTApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTauthregisterA8AB2AE9"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/register/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthregisterPOST7EE51EB4"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/login/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthlogin422FD643"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/login/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthloginOPTIONS38F71848"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/login/POST/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..auth.login": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthloginPOSTApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTauthloginD432B8DD"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/login/POST/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..auth.login": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthloginPOSTApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTauthlogin5554CFC3"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/login/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthloginPOSTE43BF528"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/verify-otp/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthverifyotp11B83C82"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/verify-otp/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthverifyotpOPTIONSB13C6525"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/verify-otp/POST/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..auth.verify-otp": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthverifyotpPOSTApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTauthverifyotpCCEB5635"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/verify-otp/POST/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..auth.verify-otp": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthverifyotpPOSTApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTauthverifyotpEFE2E1BD"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/verify-otp/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthverifyotpPOSTAC5CD13B"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/refresh/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthrefresh61FA13AB"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/refresh/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthrefreshOPTIONS0AC8362A"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/refresh/POST/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..auth.refresh": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthrefreshPOSTApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTauthrefresh0EDCBA8E"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/refresh/POST/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..auth.refresh": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthrefreshPOSTApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTauthrefresh2585D950"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/auth/refresh/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiauthrefreshPOST6AAAEAA1"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApiproperties22F16141"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiesOPTIONSBE06E0CB"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/POST/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..properties": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiesPOSTApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTproperties60EAB9A8"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/POST/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..properties": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiesPOSTApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTproperties1F2BB679"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiesPOST358EB95F"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/GET/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.GET..properties": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiesGETApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33GETproperties581B59AF"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/GET/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.GET..properties": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiesGETApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33GETproperties7343B99B"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiesGET325DD5AD"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdDA2B370C"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdOPTIONS827B2E0C"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/GET/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.GET..properties.{propertyId}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdGETApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33GETpropertiespropertyId58A77E23"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/GET/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.GET..properties.{propertyId}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdGETApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33GETpropertiespropertyId7DAADFD2"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdGETA0361330"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/DELETE/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.DELETE..properties.{propertyId}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdDELETEApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33DELETEpropertiespropertyIdF06FF4EE"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/DELETE/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.DELETE..properties.{propertyId}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdDELETEApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33DELETEpropertiespropertyId21B3F693"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/DELETE/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdDELETECD78D844"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/lineage/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdlineageDB4303B2"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/lineage/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdlineageOPTIONSDE94558E"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/lineage/GET/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.GET..properties.{propertyId}.lineage": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdlineageGETApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33GETpropertiespropertyIdlineage359AA6A3"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/lineage/GET/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.GET..properties.{propertyId}.lineage": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdlineageGETApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33GETpropertiespropertyIdlineage96437A10"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/lineage/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdlineageGETF4331278"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/trust-score/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdtrustscore2C0BE8EF"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/trust-score/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdtrustscoreOPTIONS3A797DBC"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/trust-score/GET/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.GET..properties.{propertyId}.trust-score": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdtrustscoreGETApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33GETpropertiespropertyIdtrustscoreE8F3B7C2"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/trust-score/GET/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.GET..properties.{propertyId}.trust-score": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdtrustscoreGETApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33GETpropertiespropertyIdtrustscore67D8C89E"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/trust-score/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdtrustscoreGETB5E2C2C7"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/report/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdreport6D8F6FEB"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/report/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdreportOPTIONS88F4955F"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/report/POST/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..properties.{propertyId}.report": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdreportPOSTApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTpropertiespropertyIdreportDA63C77A"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/report/POST/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..properties.{propertyId}.report": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdreportPOSTApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTpropertiespropertyIdreport3A85E637"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/report/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdreportPOST151E4944"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApidocuments06284949"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApidocumentsOPTIONS7A898550"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/upload-url/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApidocumentsuploadurl93B8AF84"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/upload-url/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApidocumentsuploadurlOPTIONSF1F0B279"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/upload-url/POST/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..documents.upload-url": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApidocumentsuploadurlPOSTApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTdocumentsuploadurl4A60A03B"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/upload-url/POST/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..documents.upload-url": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApidocumentsuploadurlPOSTApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTdocumentsuploadurlED1A2229"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/upload-url/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApidocumentsuploadurlPOSTCAC8D979"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/register/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApidocumentsregister4C881168"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/register/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApidocumentsregisterOPTIONS620BC820"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/register/POST/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..documents.register": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApidocumentsregisterPOSTApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTdocumentsregisterED7AA722"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/register/POST/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..documents.register": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApidocumentsregisterPOSTApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTdocumentsregisterB69E4BE6"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/register/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApidocumentsregisterPOST66A8E099"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/JwtAuthorizer/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewayJwtAuthorizerB6E88B49"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/MainApiUrl": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewayMainApiUrlB38A8DD1"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/MainApiId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewayMainApiId8E6F5F1F"
           }
         ],
         "/SatyaMoolStack/AlarmNotificationTopic/Resource": [

@@ -123,12 +123,6 @@ export const handler = async (
       Value: role,
     });
 
-    // Add userId as custom attribute
-    userAttributes.push({
-      Name: 'sub',
-      Value: userId,
-    });
-
     // Register user in Cognito
     const signUpCommand = new SignUpCommand({
       ClientId: USER_POOL_CLIENT_ID,

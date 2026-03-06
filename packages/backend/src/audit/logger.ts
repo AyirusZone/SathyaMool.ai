@@ -14,7 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
 
-const AUDIT_LOGS_TABLE = process.env.AUDIT_LOGS_TABLE || 'AuditLogs';
+const AUDIT_LOGS_TABLE = process.env.AUDIT_LOGS_TABLE_NAME || process.env.AUDIT_LOGS_TABLE || 'AuditLogs';
 
 /**
  * Audit log action types

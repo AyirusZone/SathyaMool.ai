@@ -15,3 +15,16 @@ frontend:
   cache:
     paths:
       - packages/frontend/node_modules/**/*
+customHeaders:
+  - pattern: '**/*'
+    headers:
+      - key: 'Cache-Control'
+        value: 'no-cache, no-store, must-revalidate'
+      - key: 'Pragma'
+        value: 'no-cache'
+      - key: 'Expires'
+        value: '0'
+redirects:
+  - source: '/<*>'
+    target: '/index.html'
+    status: '200'

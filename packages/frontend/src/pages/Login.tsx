@@ -40,7 +40,10 @@ const Login: React.FC = () => {
       console.log('isAuthenticated after login:', authService.isAuthenticated());
       console.log('localStorage accessToken:', localStorage.getItem('accessToken'));
       console.log('localStorage user:', localStorage.getItem('user'));
-      navigate('/dashboard');
+      
+      // Use window.location instead of navigate to ensure a full page load
+      // This ensures localStorage is properly set before ProtectedRoute checks
+      window.location.href = '/dashboard';
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.response?.data?.message || 'Login failed. Please try again.');

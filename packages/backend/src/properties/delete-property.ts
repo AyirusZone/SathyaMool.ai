@@ -2,7 +2,14 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, QueryCommand, DeleteCommand, BatchWriteCommand } from '@aws-sdk/lib-dynamodb';
 import { S3Client, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
-import { v4 as uuidv4 } from 'uuid';
+import {
+  createAuditLog,
+  AuditAction,
+  ResourceType,
+  extractIpAddress,
+  extractUserAgent,
+  extractRequestId,
+} from '../audit';
 
 const dynamoClient = new DynamoDBClient({
   region: process.env.AWS_REGION || 'us-east-1',
@@ -17,7 +24,6 @@ const PROPERTIES_TABLE_NAME = process.env.PROPERTIES_TABLE_NAME || 'SatyaMool-Pr
 const DOCUMENTS_TABLE_NAME = process.env.DOCUMENTS_TABLE_NAME || 'SatyaMool-Documents';
 const LINEAGE_TABLE_NAME = process.env.LINEAGE_TABLE_NAME || 'SatyaMool-Lineage';
 const TRUST_SCORES_TABLE_NAME = process.env.TRUST_SCORES_TABLE_NAME || 'SatyaMool-TrustScores';
-const AUDIT_LOGS_TABLE_NAME = process.env.AUDIT_LOGS_TABLE_NAME || 'SatyaMool-AuditLogs';
 const DOCUMENT_BUCKET_NAME = process.env.DOCUMENT_BUCKET_NAME || 'satyamool-documents';
 
 interface DeletePropertyResponse {
@@ -184,38 +190,21 @@ export const handler = async (
     });
     await docClient.send(deletePropertyCommand);
 
-    // Log deletion event to AuditLogs
-    const logId = uuidv4();
-    const timestamp = new Date().toISOString();
-    const auditLog = {
-      logId: logId,
-      timestamp: timestamp,
+    // Log deletion event using audit module
+    await createAuditLog({
       userId: userId,
-      action: 'DELETE_PROPERTY',
-      resourceType: 'Property',
+      action: AuditAction.PROPERTY_DELETED,
+      resourceType: ResourceType.PROPERTY,
       resourceId: propertyId,
-      ipAddress: event.requestContext.identity.sourceIp,
-      userAgent: event.requestContext.identity.userAgent || 'unknown',
-      requestId: event.requestContext.requestId,
-      details: {
+      requestId: extractRequestId(event),
+      ipAddress: extractIpAddress(event),
+      userAgent: extractUserAgent(event),
+      metadata: {
         propertyAddress: property.address,
-        surveNumber: property.surveyNumber,
+        surveyNumber: property.surveyNumber,
         documentsDeleted: documents.length,
       },
-    };
-
-    const putAuditLogCommand = new BatchWriteCommand({
-      RequestItems: {
-        [AUDIT_LOGS_TABLE_NAME]: [
-          {
-            PutRequest: {
-              Item: auditLog,
-            },
-          },
-        ],
-      },
     });
-    await docClient.send(putAuditLogCommand);
 
     console.log(`Property ${propertyId} deleted by user ${userId}`);
 

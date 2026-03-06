@@ -1,0 +1,35 @@
+{
+  "Records": [
+    {
+      "eventID": "1",
+      "eventName": "INSERT",
+      "eventVersion": "1.1",
+      "eventSource": "aws:dynamodb",
+      "awsRegion": "ap-south-1",
+      "dynamodb": {
+        "Keys": {
+          "documentId": {"S": "test-doc-123"},
+          "propertyId": {"S": "test-property-456"}
+        },
+        "NewImage": {
+          "documentId": {"S": "test-doc-123"},
+          "propertyId": {"S": "test-property-456"},
+          "userId": {"S": "test-user-789"},
+          "processingStatus": {"S": "ocr_complete"},
+          "uploadedAt": {"S": "2026-03-06T10:00:00Z"},
+          "documentType": {"S": "sale_deed"},
+          "fileName": {"S": "test-document.pdf"}
+        },
+        "OldImage": {
+          "documentId": {"S": "test-doc-123"},
+          "propertyId": {"S": "test-property-456"},
+          "processingStatus": {"S": "pending"}
+        },
+        "SequenceNumber": "111",
+        "SizeBytes": 26,
+        "StreamViewType": "NEW_AND_OLD_IMAGES"
+      },
+      "eventSourceARN": "arn:aws:dynamodb:ap-south-1:339648407295:table/SatyaMool-Documents/stream/2026-03-06T09:33:55.166"
+    }
+  ]
+}

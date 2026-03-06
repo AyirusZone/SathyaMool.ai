@@ -1,6 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { propertyCache } from '../utils/dynamodb-cache';
 
 const dynamoClient = new DynamoDBClient({
   region: process.env.AWS_REGION || 'us-east-1',
@@ -70,28 +71,71 @@ export const handler = async (
       return createErrorResponse(400, 'INVALID_DATE', 'endDate must be in ISO 8601 format');
     }
 
-    // Query properties using GSI userId-createdAt-index
-    const queryCommand = new QueryCommand({
-      TableName: PROPERTIES_TABLE_NAME,
-      IndexName: 'userId-createdAt-index',
-      KeyConditionExpression: 'userId = :userId',
-      ExpressionAttributeValues: {
-        ':userId': userId,
-      },
-      Limit: limit,
-      ExclusiveStartKey: nextToken ? JSON.parse(Buffer.from(nextToken, 'base64').toString()) : undefined,
-      ScanIndexForward: false, // Sort by createdAt descending (newest first)
+    // Generate cache key for this query
+    const cacheKey = propertyCache.generateKey(PROPERTIES_TABLE_NAME, {
+      userId,
+      status,
+      startDate,
+      endDate,
+      limit,
+      nextToken,
     });
+
+    // Try to get from cache
+    const cachedResult = propertyCache.get(cacheKey);
+    if (cachedResult) {
+      console.log(`Cache hit for user ${userId} properties list`);
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': true,
+          'X-Cache': 'HIT',
+        },
+        body: JSON.stringify(cachedResult),
+      };
+    }
+
+    // Optimize query based on filters
+    // Use userId-status-index if status filter is provided for better performance
+    let queryCommand: QueryCommand;
+    
+    if (status) {
+      // Use optimized GSI for status filtering
+      queryCommand = new QueryCommand({
+        TableName: PROPERTIES_TABLE_NAME,
+        IndexName: 'userId-status-index',
+        KeyConditionExpression: 'userId = :userId AND #status = :status',
+        ExpressionAttributeNames: {
+          '#status': 'status',
+        },
+        ExpressionAttributeValues: {
+          ':userId': userId,
+          ':status': status,
+        },
+        Limit: limit,
+        ExclusiveStartKey: nextToken ? JSON.parse(Buffer.from(nextToken, 'base64').toString()) : undefined,
+      });
+    } else {
+      // Use default GSI for general queries
+      queryCommand = new QueryCommand({
+        TableName: PROPERTIES_TABLE_NAME,
+        IndexName: 'userId-createdAt-index',
+        KeyConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: {
+          ':userId': userId,
+        },
+        Limit: limit,
+        ExclusiveStartKey: nextToken ? JSON.parse(Buffer.from(nextToken, 'base64').toString()) : undefined,
+        ScanIndexForward: false, // Sort by createdAt descending (newest first)
+      });
+    }
 
     const result = await docClient.send(queryCommand);
 
-    // Filter results based on query parameters
+    // Filter results based on date range (if not using status GSI)
     let properties = (result.Items || []) as PropertySummary[];
-
-    // Apply status filter
-    if (status) {
-      properties = properties.filter(p => p.status === status);
-    }
 
     // Apply date range filter
     if (startDate) {
@@ -112,6 +156,9 @@ export const handler = async (
       response.nextToken = Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64');
     }
 
+    // Cache the result (TTL: 5 minutes)
+    propertyCache.set(cacheKey, response);
+
     console.log(`Retrieved ${properties.length} properties for user ${userId}`);
 
     return {
@@ -120,6 +167,7 @@ export const handler = async (
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Credentials': true,
+        'X-Cache': 'MISS',
       },
       body: JSON.stringify(response),
     };

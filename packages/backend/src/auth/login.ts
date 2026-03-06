@@ -5,8 +5,15 @@ import {
   GetUserCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, UpdateCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
-import { v4 as uuidv4 } from 'uuid';
+import { DynamoDBDocumentClient, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import {
+  createAuditLog,
+  AuditAction,
+  ResourceType,
+  extractIpAddress,
+  extractUserAgent,
+  extractRequestId,
+} from '../audit';
 
 const cognitoClient = new CognitoIdentityProviderClient({
   region: process.env.AWS_REGION || 'us-east-1',
@@ -19,7 +26,6 @@ const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
 const USER_POOL_CLIENT_ID = process.env.USER_POOL_CLIENT_ID!;
 const USERS_TABLE_NAME = process.env.USERS_TABLE_NAME || 'SatyaMool-Users';
-const AUDIT_LOGS_TABLE_NAME = process.env.AUDIT_LOGS_TABLE_NAME || 'SatyaMool-AuditLogs';
 
 interface LoginRequest {
   username: string; // email or phone number
@@ -51,21 +57,13 @@ export const handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('Login request received:', JSON.stringify(event, null, 2));
 
-  const requestId = event.requestContext.requestId;
-  const ipAddress = event.requestContext.identity.sourceIp;
-  const userAgent = event.requestContext.identity.userAgent || 'unknown';
+  const requestId = extractRequestId(event);
+  const ipAddress = extractIpAddress(event);
+  const userAgent = extractUserAgent(event);
 
   try {
     // Parse request body
     if (!event.body) {
-      await logAuthenticationEvent(
-        null,
-        'login_failed',
-        'missing_body',
-        requestId,
-        ipAddress,
-        userAgent
-      );
       return createErrorResponse(400, 'MISSING_BODY', 'Request body is required');
     }
 
@@ -73,14 +71,6 @@ export const handler = async (
 
     // Validate input
     if (!body.username || !body.password) {
-      await logAuthenticationEvent(
-        body.username || null,
-        'login_failed',
-        'missing_credentials',
-        requestId,
-        ipAddress,
-        userAgent
-      );
       return createErrorResponse(
         400,
         'MISSING_CREDENTIALS',
@@ -101,14 +91,6 @@ export const handler = async (
     const authResponse = await cognitoClient.send(authCommand);
 
     if (!authResponse.AuthenticationResult) {
-      await logAuthenticationEvent(
-        body.username,
-        'login_failed',
-        'authentication_failed',
-        requestId,
-        ipAddress,
-        userAgent
-      );
       return createErrorResponse(
         401,
         'AUTHENTICATION_FAILED',
@@ -150,16 +132,20 @@ export const handler = async (
 
     await docClient.send(updateCommand);
 
-    // Log successful authentication event
-    await logAuthenticationEvent(
-      body.username,
-      'login_success',
-      'authenticated',
-      requestId,
-      ipAddress,
-      userAgent,
-      userId
-    );
+    // Log successful authentication event using audit module
+    await createAuditLog({
+      userId: userId,
+      action: AuditAction.USER_LOGIN,
+      resourceType: ResourceType.USER,
+      resourceId: userId,
+      requestId: requestId,
+      ipAddress: ipAddress,
+      userAgent: userAgent,
+      metadata: {
+        username: body.username,
+        role: role,
+      },
+    });
 
     // Prepare response
     const response: LoginResponse = {
@@ -183,17 +169,6 @@ export const handler = async (
     };
   } catch (error: any) {
     console.error('Login error:', error);
-
-    // Log failed authentication event
-    const username = event.body ? JSON.parse(event.body).username : null;
-    await logAuthenticationEvent(
-      username,
-      'login_failed',
-      error.name || 'unknown_error',
-      requestId,
-      ipAddress,
-      userAgent
-    );
 
     // Handle Cognito-specific errors
     if (error.name === 'NotAuthorizedException') {
@@ -244,51 +219,6 @@ export const handler = async (
     );
   }
 };
-
-/**
- * Log authentication event to AuditLogs table
- * Requirement 17.1: Log all user authentication events with timestamp, IP address, and outcome
- */
-async function logAuthenticationEvent(
-  username: string | null,
-  action: string,
-  outcome: string,
-  requestId: string,
-  ipAddress: string,
-  userAgent: string,
-  userId?: string
-): Promise<void> {
-  try {
-    const logId = uuidv4();
-    const timestamp = new Date().toISOString();
-
-    const auditLog = {
-      logId: logId,
-      timestamp: timestamp,
-      userId: userId || null,
-      username: username,
-      action: action,
-      outcome: outcome,
-      resourceType: 'authentication',
-      resourceId: null,
-      ipAddress: ipAddress,
-      userAgent: userAgent,
-      requestId: requestId,
-    };
-
-    const putCommand = new PutCommand({
-      TableName: AUDIT_LOGS_TABLE_NAME,
-      Item: auditLog,
-    });
-
-    await docClient.send(putCommand);
-
-    console.log('Authentication event logged:', auditLog);
-  } catch (error) {
-    console.error('Failed to log authentication event:', error);
-    // Don't throw error - logging failure should not prevent login
-  }
-}
 
 /**
  * Create error response

@@ -1,0 +1,87 @@
+import api from './api';
+
+export interface User {
+  userId: string;
+  email?: string;
+  phoneNumber?: string;
+  role: 'Standard_User' | 'Professional_User' | 'Admin_User';
+  createdAt?: string;
+}
+
+export interface LoginRequest {
+  email?: string;
+  phoneNumber?: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  email?: string;
+  phoneNumber?: string;
+  password: string;
+  role?: 'Standard_User' | 'Professional_User';
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: User;
+}
+
+export interface VerifyOtpRequest {
+  phoneNumber: string;
+  otp: string;
+}
+
+class AuthService {
+  async login(credentials: LoginRequest): Promise<AuthResponse> {
+    const response = await api.post<AuthResponse>('/auth/login', credentials);
+    this.setAuthData(response.data);
+    return response.data;
+  }
+
+  async register(data: RegisterRequest): Promise<{ message: string; requiresOtp: boolean }> {
+    const response = await api.post('/auth/register', data);
+    return response.data;
+  }
+
+  async verifyOtp(data: VerifyOtpRequest): Promise<AuthResponse> {
+    const response = await api.post<AuthResponse>('/auth/verify-otp', data);
+    this.setAuthData(response.data);
+    return response.data;
+  }
+
+  async refreshToken(): Promise<AuthResponse> {
+    const refreshToken = localStorage.getItem('refreshToken');
+    const response = await api.post<AuthResponse>('/auth/refresh', { refreshToken });
+    this.setAuthData(response.data);
+    return response.data;
+  }
+
+  logout() {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+  }
+
+  getCurrentUser(): User | null {
+    const userStr = localStorage.getItem('user');
+    return userStr ? JSON.parse(userStr) : null;
+  }
+
+  isAuthenticated(): boolean {
+    return !!localStorage.getItem('accessToken');
+  }
+
+  hasRole(role: string): boolean {
+    const user = this.getCurrentUser();
+    return user?.role === role;
+  }
+
+  private setAuthData(data: AuthResponse) {
+    localStorage.setItem('accessToken', data.accessToken);
+    localStorage.setItem('refreshToken', data.refreshToken);
+    localStorage.setItem('user', JSON.stringify(data.user));
+  }
+}
+
+export default new AuthService();

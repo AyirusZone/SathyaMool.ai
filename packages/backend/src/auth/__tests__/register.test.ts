@@ -400,9 +400,15 @@ describe('Registration Lambda Handler', () => {
       await handler(event as APIGatewayProxyEvent);
 
       const dynamoCalls = dynamoMock.commandCalls(PutCommand);
-      expect(dynamoCalls.length).toBe(1);
+      expect(dynamoCalls.length).toBe(2); // User record + audit log
 
-      const item = dynamoCalls[0].args[0].input.Item!;
+      // Find the user record (not the audit log)
+      const userRecordCall = dynamoCalls.find(
+        call => call.args[0].input.TableName === 'SatyaMool-Users'
+      );
+      expect(userRecordCall).toBeDefined();
+
+      const item = userRecordCall!.args[0].input.Item!;
       expect(item.userId).toBeDefined();
       expect(item.email).toBe('test@example.com');
       expect(item.givenName).toBe('John');

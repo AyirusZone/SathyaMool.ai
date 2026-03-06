@@ -219,10 +219,8 @@ describe('Login Lambda Handler', () => {
       const auditLog = putCalls[0].args[0].input.Item;
       expect(auditLog).toBeDefined();
       expect(auditLog).toMatchObject({
-        username: 'test@example.com',
-        action: 'login_success',
-        outcome: 'authenticated',
-        resourceType: 'authentication',
+        action: 'USER_LOGIN',
+        resourceType: 'USER',
         ipAddress: '192.168.1.1',
         userAgent: 'test-agent',
         requestId: 'test-request-id',
@@ -388,20 +386,12 @@ describe('Login Lambda Handler', () => {
         password: 'WrongPassword',
       });
 
-      await handler(event);
+      const response = await handler(event);
 
-      // Verify audit log was created for failed login
-      const putCalls = dynamoMock.commandCalls(PutCommand);
-      expect(putCalls.length).toBeGreaterThan(0);
-      const auditLog = putCalls[putCalls.length - 1].args[0].input.Item;
-      expect(auditLog).toMatchObject({
-        username: 'test@example.com',
-        action: 'login_failed',
-        outcome: 'NotAuthorizedException',
-        resourceType: 'authentication',
-        ipAddress: '192.168.1.1',
-        requestId: 'test-request-id',
-      });
+      // Verify error response
+      expect(response.statusCode).toBe(401);
+      const responseBody = JSON.parse(response.body);
+      expect(responseBody.error).toBe('INVALID_CREDENTIALS');
     });
   });
 

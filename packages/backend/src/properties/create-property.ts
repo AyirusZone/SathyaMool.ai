@@ -1,7 +1,12 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, PutCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  executeIdempotent,
+  generateIdempotencyKey,
+  conditionalPut,
+} from '../utils/idempotency';
 
 const dynamoClient = new DynamoDBClient({
   region: process.env.AWS_REGION || 'us-east-1',
@@ -34,9 +39,10 @@ interface ErrorResponse {
 }
 
 /**
- * Lambda handler for property creation
+ * Lambda handler for property creation with idempotency
  * Creates a new property verification record in DynamoDB
  * Associates property with authenticated user from JWT claims
+ * Uses idempotency to prevent duplicate property creation
  */
 export const handler = async (
   event: APIGatewayProxyEvent
@@ -64,45 +70,78 @@ export const handler = async (
       return createErrorResponse(400, 'VALIDATION_ERROR', validationError);
     }
 
-    // Generate unique propertyId
-    const propertyId = uuidv4();
-    const now = new Date().toISOString();
-
-    // Create property record
-    const propertyRecord = {
-      propertyId: propertyId,
-      userId: userId,
-      address: body.address || null,
-      surveyNumber: body.surveyNumber || null,
-      description: body.description || null,
-      status: 'pending',
-      trustScore: null,
-      documentCount: 0,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    // Store in DynamoDB
-    const putCommand = new PutCommand({
-      TableName: PROPERTIES_TABLE_NAME,
-      Item: propertyRecord,
-      ConditionExpression: 'attribute_not_exists(propertyId)',
-    });
-
-    await docClient.send(putCommand);
-
-    console.log('Property record created:', propertyRecord);
-
-    // Prepare response
-    const response: CreatePropertyResponse = {
-      propertyId: propertyId,
-      userId: userId,
+    // Generate idempotency key from user ID and property details
+    // This ensures the same user creating the same property details gets the same result
+    const idempotencyData = {
+      userId,
       address: body.address,
       surveyNumber: body.surveyNumber,
       description: body.description,
-      status: 'pending',
-      trustScore: null,
-      createdAt: now,
+    };
+    const idempotencyKey = `property:create:${generateIdempotencyKey(idempotencyData)}`;
+
+    console.log(`Creating property with idempotency key: ${idempotencyKey}`);
+
+    // Execute idempotent property creation
+    const result = await executeIdempotent(
+      async () => {
+        // Generate unique propertyId
+        const propertyId = uuidv4();
+        const now = new Date().toISOString();
+
+        // Create property record
+        const propertyRecord = {
+          propertyId: propertyId,
+          userId: userId,
+          address: body.address || null,
+          surveyNumber: body.surveyNumber || null,
+          description: body.description || null,
+          status: 'pending',
+          trustScore: null,
+          documentCount: 0,
+          createdAt: now,
+          updatedAt: now,
+        };
+
+        // Store in DynamoDB with conditional write to prevent duplicates
+        const success = await conditionalPut({
+          TableName: PROPERTIES_TABLE_NAME,
+          Item: propertyRecord,
+          ConditionExpression: 'attribute_not_exists(propertyId)',
+        });
+
+        if (!success) {
+          // Property already exists, fetch and return it
+          console.log(`Property ${propertyId} already exists, fetching existing record`);
+          const getCommand = new GetCommand({
+            TableName: PROPERTIES_TABLE_NAME,
+            Key: { propertyId },
+          });
+          const existingResult = await docClient.send(getCommand);
+          return existingResult.Item;
+        }
+
+        console.log('Property record created:', propertyRecord);
+        return propertyRecord;
+      },
+      idempotencyData,
+      { idempotencyKey }
+    );
+
+    // Prepare response
+    if (!result) {
+      throw new Error('Failed to create property record');
+    }
+
+    const response: CreatePropertyResponse = {
+      propertyId: result.propertyId,
+      userId: result.userId,
+      address: result.address,
+      surveyNumber: result.surveyNumber,
+      description: result.description,
+      status: result.status,
+      trustScore: result.trustScore,
+      createdAt: result.createdAt,
       message: 'Property verification created successfully',
     };
 
@@ -117,6 +156,15 @@ export const handler = async (
     };
   } catch (error: any) {
     console.error('Create property error:', error);
+
+    // Handle idempotency errors
+    if (error.message === 'Operation already in progress') {
+      return createErrorResponse(
+        409,
+        'OPERATION_IN_PROGRESS',
+        'Property creation is already in progress. Please wait.'
+      );
+    }
 
     // Handle DynamoDB-specific errors
     if (error.name === 'ConditionalCheckFailedException') {

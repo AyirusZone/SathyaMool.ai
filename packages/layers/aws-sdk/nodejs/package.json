@@ -1,0 +1,14 @@
+{
+  "name": "satyamool-aws-sdk-layer",
+  "version": "1.0.0",
+  "description": "AWS SDK v3 for SatyaMool Lambda functions",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.490.0",
+    "@aws-sdk/lib-dynamodb": "^3.490.0",
+    "@aws-sdk/client-s3": "^3.490.0",
+    "@aws-sdk/client-sqs": "^3.490.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.490.0",
+    "@aws-sdk/client-ses": "^3.490.0",
+    "@aws-sdk/s3-request-presigner": "^3.490.0"
+  }
+}

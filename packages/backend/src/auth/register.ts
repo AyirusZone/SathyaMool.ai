@@ -8,6 +8,14 @@ import {
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  createAuditLog,
+  AuditAction,
+  ResourceType,
+  extractIpAddress,
+  extractUserAgent,
+  extractRequestId,
+} from '../audit';
 
 const cognitoClient = new CognitoIdentityProviderClient({
   region: process.env.AWS_REGION || 'us-east-1',
@@ -156,6 +164,23 @@ export const handler = async (
     await docClient.send(putCommand);
 
     console.log('User record created in DynamoDB:', userRecord);
+
+    // Log user registration event
+    await createAuditLog({
+      userId: userId,
+      action: AuditAction.USER_REGISTERED,
+      resourceType: ResourceType.USER,
+      resourceId: userId,
+      requestId: extractRequestId(event),
+      ipAddress: extractIpAddress(event),
+      userAgent: extractUserAgent(event),
+      metadata: {
+        email: body.email,
+        phoneNumber: body.phoneNumber,
+        role: role,
+        userConfirmed: signUpResponse.UserConfirmed,
+      },
+    });
 
     // Prepare response
     const response: RegisterResponse = {

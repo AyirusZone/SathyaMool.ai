@@ -12,11 +12,14 @@
     "@aws-sdk/client-cognito-identity-provider": "^3.490.0",
     "@aws-sdk/client-dynamodb": "^3.490.0",
     "@aws-sdk/client-s3": "^3.490.0",
+    "@aws-sdk/client-ses": "^3.490.0",
     "@aws-sdk/client-sqs": "^3.490.0",
     "@aws-sdk/lib-dynamodb": "^3.490.0",
     "@aws-sdk/s3-request-presigner": "^3.490.0",
+    "@aws-sdk/util-dynamodb": "^3.490.0",
     "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.1.0",
+    "pdfkit": "^0.14.0",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
@@ -24,6 +27,7 @@
     "@types/jest": "^29.5.11",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.10.6",
+    "@types/pdfkit": "^0.13.9",
     "@types/uuid": "^9.0.7",
     "@typescript-eslint/eslint-plugin": "^6.18.0",
     "@typescript-eslint/parser": "^6.18.0",

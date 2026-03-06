@@ -8,7 +8,7 @@ const app = new cdk.App();
 new SatyaMoolStack(app, 'SatyaMoolStack', {
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: process.env.CDK_DEFAULT_REGION || 'us-east-1',
+    region: process.env.CDK_DEFAULT_REGION || 'ap-south-1',
   },
   description: 'SatyaMool - AWS Serverless Property Verification Platform',
 });

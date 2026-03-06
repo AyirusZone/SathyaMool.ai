@@ -1,0 +1,9 @@
+{
+  "name": "satyamool-nodejs-common-layer",
+  "version": "1.0.0",
+  "description": "Common Node.js dependencies for SatyaMool Lambda functions",
+  "dependencies": {
+    "uuid": "^9.0.1",
+    "date-fns": "^3.0.0"
+  }
+}

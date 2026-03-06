@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent } from 'aws-lambda';
 import { mockClient } from 'aws-sdk-client-mock';
-import { DynamoDBDocumentClient, QueryCommand, DeleteCommand, BatchWriteCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, QueryCommand, DeleteCommand, BatchWriteCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { S3Client, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import { handler } from '../delete-property';
 
@@ -337,9 +337,10 @@ describe('Delete Property Lambda', () => {
       const event = createMockEvent('prop-123', 'user-123');
       await handler(event);
 
-      const batchWriteCalls = ddbMock.commandCalls(BatchWriteCommand);
-      const auditLogCall = batchWriteCalls.find(
-        call => call.args[0].input.RequestItems?.['SatyaMool-AuditLogs']
+      // Verify audit log was created using PutCommand (new audit logging module)
+      const putCalls = ddbMock.commandCalls(PutCommand);
+      const auditLogCall = putCalls.find(
+        call => call.args[0].input.TableName === 'AuditLogs'
       );
       expect(auditLogCall).toBeDefined();
     });

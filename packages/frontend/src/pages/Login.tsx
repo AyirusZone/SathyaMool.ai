@@ -24,6 +24,14 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (authService.isAuthenticated()) {
+      console.log('Already authenticated, redirecting to dashboard');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -41,9 +49,8 @@ const Login: React.FC = () => {
       console.log('localStorage accessToken:', localStorage.getItem('accessToken'));
       console.log('localStorage user:', localStorage.getItem('user'));
       
-      // Use window.location instead of navigate to ensure a full page load
-      // This ensures localStorage is properly set before ProtectedRoute checks
-      window.location.href = '/dashboard';
+      // Use navigate with replace to avoid back button issues
+      navigate('/dashboard', { replace: true });
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.response?.data?.message || 'Login failed. Please try again.');

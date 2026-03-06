@@ -163,6 +163,8 @@ export const handler = async (
       role: role,
     };
 
+    console.log('Login successful, returning response with userId:', userId, 'role:', role);
+
     return {
       statusCode: 200,
       headers: {

@@ -38,8 +38,12 @@ export interface VerifyOtpRequest {
 
 class AuthService {
   async login(credentials: LoginRequest): Promise<AuthResponse> {
+    console.log('AuthService.login called with:', credentials);
     const response = await api.post<AuthResponse>('/auth/login', credentials);
+    console.log('Login API response:', response.data);
     this.setAuthData(response.data);
+    console.log('After setAuthData - accessToken:', localStorage.getItem('accessToken'));
+    console.log('After setAuthData - user:', localStorage.getItem('user'));
     return response.data;
   }
 
@@ -98,6 +102,7 @@ class AuthService {
   }
 
   private setAuthData(data: AuthResponse) {
+    console.log('setAuthData called with:', data);
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
     
@@ -107,7 +112,10 @@ class AuthService {
       role: data.role as 'Standard_User' | 'Professional_User' | 'Admin_User',
     };
     
+    console.log('Setting user in localStorage:', user);
     localStorage.setItem('user', JSON.stringify(user));
+    console.log('Verification - accessToken stored:', !!localStorage.getItem('accessToken'));
+    console.log('Verification - user stored:', localStorage.getItem('user'));
   }
 }
 

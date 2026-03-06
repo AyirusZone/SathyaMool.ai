@@ -34,9 +34,15 @@ const Login: React.FC = () => {
         ? { email, password }
         : { phoneNumber, password };
 
-      await authService.login(credentials);
+      console.log('Login attempt with credentials:', credentials);
+      const response = await authService.login(credentials);
+      console.log('Login response:', response);
+      console.log('isAuthenticated after login:', authService.isAuthenticated());
+      console.log('localStorage accessToken:', localStorage.getItem('accessToken'));
+      console.log('localStorage user:', localStorage.getItem('user'));
       navigate('/dashboard');
     } catch (err: any) {
+      console.error('Login error:', err);
       setError(err.response?.data?.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);

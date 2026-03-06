@@ -49,9 +49,17 @@ class ApiClient {
               refreshToken,
             });
 
-            const { accessToken, refreshToken: newRefreshToken } = response.data;
+            const { accessToken } = response.data;
             localStorage.setItem('accessToken', accessToken);
-            localStorage.setItem('refreshToken', newRefreshToken);
+            
+            // Update user data if present
+            if (response.data.userId && response.data.role) {
+              const user = {
+                userId: response.data.userId,
+                role: response.data.role,
+              };
+              localStorage.setItem('user', JSON.stringify(user));
+            }
 
             originalRequest.headers.Authorization = `Bearer ${accessToken}`;
             return this.client(originalRequest);

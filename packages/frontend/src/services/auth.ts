@@ -23,8 +23,12 @@ export interface RegisterRequest {
 
 export interface AuthResponse {
   accessToken: string;
+  idToken: string;
   refreshToken: string;
-  user: User;
+  expiresIn: number;
+  tokenType: string;
+  userId: string;
+  role: string;
 }
 
 export interface VerifyOtpRequest {
@@ -53,7 +57,18 @@ class AuthService {
   async refreshToken(): Promise<AuthResponse> {
     const refreshToken = localStorage.getItem('refreshToken');
     const response = await api.post<AuthResponse>('/auth/refresh', { refreshToken });
-    this.setAuthData(response.data);
+    
+    // Refresh endpoint returns new accessToken but not a new refreshToken
+    // Update only the accessToken, keep the existing refreshToken
+    localStorage.setItem('accessToken', response.data.accessToken);
+    
+    // Update user data if userId/role changed
+    const user: User = {
+      userId: response.data.userId,
+      role: response.data.role as 'Standard_User' | 'Professional_User' | 'Admin_User',
+    };
+    localStorage.setItem('user', JSON.stringify(user));
+    
     return response.data;
   }
 
@@ -85,7 +100,14 @@ class AuthService {
   private setAuthData(data: AuthResponse) {
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
-    localStorage.setItem('user', JSON.stringify(data.user));
+    
+    // Convert backend response to User object
+    const user: User = {
+      userId: data.userId,
+      role: data.role as 'Standard_User' | 'Professional_User' | 'Admin_User',
+    };
+    
+    localStorage.setItem('user', JSON.stringify(user));
   }
 }
 

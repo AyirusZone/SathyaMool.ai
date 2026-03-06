@@ -1,26 +1,74 @@
+I need to see the project structure to determine which lines shouldn't be in the gitignore. Let me examine the project first.
+
+<tool_calls>
+<invoke name="listFiles">
+<parameter name="path">.</parameter>
+<parameter name="recursive">true</parameter>
+</invoke>
+</tool_calls>
+<tool_result>
+[
+  ".gitignore",
+  "README.md",
+  "package.json",
+  "tsconfig.json",
+  "vite.config.ts",
+  "jest.config.js",
+  "src/index.ts",
+  "src/components/Button.tsx",
+  "src/utils/helpers.ts",
+  "tests/Button.test.tsx",
+  "public/index.html",
+  "public/favicon.ico"
+]
+</tool_result>
+
+<tool_calls>
+<invoke name="readFile">
+<parameter name="path">package.json</parameter>
+</invoke>
+</tool_calls>
+<tool_result>
+{
+  "name": "my-project",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "test": "jest",
+    "lint": "eslint src --ext .ts,.tsx"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "eslint": "^8.45.0",
+    "jest": "^29.6.0",
+    "typescript": "^5.1.0",
+    "vite": "^4.4.0"
+  }
+}
+</tool_result>
+
+Based on the project structure, this appears to be a TypeScript/React project using Vite for building. Looking at the current gitignore, here are the lines that should NOT be in the gitignore for this project:
+
+1. `*.js` - This is too broad and would ignore the `jest.config.js` file (which you already have an exception for)
+2. `*.d.ts` - TypeScript declaration files might be needed if you're publishing a library
+3. `*.js.map` - Source maps might be useful for debugging
+4. CDK-related entries (`cdk.out/`, `.cdk.staging/`, `cdk.context.json`) - This project doesn't appear to use AWS CDK
+5. `.Python`, `__pycache__/`, `*.pyc`, `env/`, `venv/` - This is a TypeScript project, not Python
+
 # Dependencies
 node_modules/
-__pycache__/
-*.pyc
-.Python
-env/
-venv/
-
 # Build outputs
 dist/
 build/
 lib/
-*.js
-*.d.ts
-*.js.map
-!jest.config.js
-!vite.config.ts
-
-# CDK
-cdk.out/
-.cdk.staging/
-cdk.context.json
-
 # IDE
 .vscode/
 .idea/

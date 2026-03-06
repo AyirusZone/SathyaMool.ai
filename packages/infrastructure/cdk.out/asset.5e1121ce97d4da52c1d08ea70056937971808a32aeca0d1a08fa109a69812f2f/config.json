@@ -1,0 +1,19 @@
+{
+  "functionName": "SatyaMool-OCR-Processor",
+  "description": "OCR processing Lambda function using Amazon Textract",
+  "runtime": "python3.12",
+  "architecture": "arm64",
+  "memorySize": 512,
+  "timeout": 300,
+  "environment": {
+    "DOCUMENTS_TABLE_NAME": "SatyaMool-Documents",
+    "QUEUE_URL": "${QUEUE_URL}",
+    "LOG_LEVEL": "INFO"
+  },
+  "reservedConcurrentExecutions": 100,
+  "sqsEventSource": {
+    "batchSize": 10,
+    "maxBatchingWindowInSeconds": 5,
+    "functionResponseTypes": ["ReportBatchItemFailures"]
+  }
+}

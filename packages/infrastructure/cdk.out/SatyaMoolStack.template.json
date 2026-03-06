@@ -1,0 +1,1859 @@
+{
+ "Description": "SatyaMool - AWS Serverless Property Verification Platform",
+ "Resources": {
+  "LambdaLayersNodejsCommonLayer122327BB": {
+   "Type": "AWS::Lambda::LayerVersion",
+   "Properties": {
+    "CompatibleArchitectures": [
+     "arm64"
+    ],
+    "CompatibleRuntimes": [
+     "nodejs20.x"
+    ],
+    "Content": {
+     "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
+     "S3Key": "511161663554a947588a3e4fd9360d2f764b5a3eb46ff54ac7602320df113406.zip"
+    },
+    "Description": "Common Node.js dependencies for SatyaMool Lambda functions",
+    "LayerName": "satyamool-nodejs-common"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/LambdaLayers/NodejsCommonLayer/Resource",
+    "aws:asset:path": "asset.511161663554a947588a3e4fd9360d2f764b5a3eb46ff54ac7602320df113406",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Content"
+   }
+  },
+  "LambdaLayersPythonCommonLayer321F0602": {
+   "Type": "AWS::Lambda::LayerVersion",
+   "Properties": {
+    "CompatibleArchitectures": [
+     "arm64"
+    ],
+    "CompatibleRuntimes": [
+     "python3.12"
+    ],
+    "Content": {
+     "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
+     "S3Key": "6c7e1d027f0d35e4efb484986f53ebb3ee48fc70a4030a74faaf20166e5a3079.zip"
+    },
+    "Description": "Common Python dependencies for SatyaMool Lambda functions",
+    "LayerName": "satyamool-python-common"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/LambdaLayers/PythonCommonLayer/Resource",
+    "aws:asset:path": "asset.6c7e1d027f0d35e4efb484986f53ebb3ee48fc70a4030a74faaf20166e5a3079",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Content"
+   }
+  },
+  "LambdaLayersAwsSdkLayer51AB3FF6": {
+   "Type": "AWS::Lambda::LayerVersion",
+   "Properties": {
+    "CompatibleArchitectures": [
+     "arm64"
+    ],
+    "CompatibleRuntimes": [
+     "nodejs20.x"
+    ],
+    "Content": {
+     "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
+     "S3Key": "8a87af2c0c11cfa4d7b469ff8f96b41dbc387361d6ed4c078af28810d57fa7eb.zip"
+    },
+    "Description": "AWS SDK v3 for SatyaMool Lambda functions",
+    "LayerName": "satyamool-aws-sdk"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/LambdaLayers/AwsSdkLayer/Resource",
+    "aws:asset:path": "asset.8a87af2c0c11cfa4d7b469ff8f96b41dbc387361d6ed4c078af28810d57fa7eb",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Content"
+   }
+  },
+  "SatyaMoolEncryptionKeyB4E20C38": {
+   "Type": "AWS::KMS::Key",
+   "Properties": {
+    "Description": "KMS key for SatyaMool document encryption",
+    "EnableKeyRotation": true,
+    "KeyPolicy": {
+     "Statement": [
+      {
+       "Action": "kms:*",
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": "arn:aws:iam::339648407295:root"
+       },
+       "Resource": "*"
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/SatyaMoolEncryptionKey/Resource"
+   }
+  },
+  "SatyaMoolEncryptionKeyAlias8B9C6A7C": {
+   "Type": "AWS::KMS::Alias",
+   "Properties": {
+    "AliasName": "alias/satyamool/document-encryption",
+    "TargetKeyId": {
+     "Fn::GetAtt": [
+      "SatyaMoolEncryptionKeyB4E20C38",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/SatyaMoolEncryptionKey/Alias/Resource"
+   }
+  },
+  "DocumentProcessingDLQ40B3917D": {
+   "Type": "AWS::SQS::Queue",
+   "Properties": {
+    "MessageRetentionPeriod": 1209600,
+    "QueueName": "satyamool-document-processing-dlq",
+    "SqsManagedSseEnabled": true
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/DocumentProcessingDLQ/Resource"
+   }
+  },
+  "DocumentProcessingQueueB731B00D": {
+   "Type": "AWS::SQS::Queue",
+   "Properties": {
+    "QueueName": "satyamool-document-processing",
+    "ReceiveMessageWaitTimeSeconds": 20,
+    "RedrivePolicy": {
+     "deadLetterTargetArn": {
+      "Fn::GetAtt": [
+       "DocumentProcessingDLQ40B3917D",
+       "Arn"
+      ]
+     },
+     "maxReceiveCount": 3
+    },
+    "SqsManagedSseEnabled": true,
+    "VisibilityTimeout": 360
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/DocumentProcessingQueue/Resource"
+   }
+  },
+  "DocumentBucketAE41E5A9": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketEncryption": {
+     "ServerSideEncryptionConfiguration": [
+      {
+       "ServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+       }
+      }
+     ]
+    },
+    "BucketName": "satyamool-documents-339648407295",
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "BlockPublicPolicy": true,
+     "IgnorePublicAcls": true,
+     "RestrictPublicBuckets": true
+    },
+    "VersioningConfiguration": {
+     "Status": "Enabled"
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/DocumentBucket/Resource"
+   }
+  },
+  "AuditLogBucketCB3C9E27": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketEncryption": {
+     "ServerSideEncryptionConfiguration": [
+      {
+       "ServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+       }
+      }
+     ]
+    },
+    "BucketName": "satyamool-audit-logs-339648407295",
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "BlockPublicPolicy": true,
+     "IgnorePublicAcls": true,
+     "RestrictPublicBuckets": true
+    },
+    "VersioningConfiguration": {
+     "Status": "Enabled"
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/AuditLogBucket/Resource"
+   }
+  },
+  "DocumentsTable7E808EE5": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "documentId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "propertyId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "uploadedAt",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "processingStatus",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "propertyId-uploadedAt-index",
+      "KeySchema": [
+       {
+        "AttributeName": "propertyId",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "uploadedAt",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     },
+     {
+      "IndexName": "propertyId-processingStatus-index",
+      "KeySchema": [
+       {
+        "AttributeName": "propertyId",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "processingStatus",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "KEYS_ONLY"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "documentId",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "propertyId",
+      "KeyType": "RANGE"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": true
+    },
+    "SSESpecification": {
+     "SSEEnabled": true
+    },
+    "StreamSpecification": {
+     "StreamViewType": "NEW_AND_OLD_IMAGES"
+    },
+    "TableName": "SatyaMool-Documents"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/DocumentsTable/Resource"
+   }
+  },
+  "IdempotencyTable22A5A209": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "idempotencyKey",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "idempotencyKey",
+      "KeyType": "HASH"
+     }
+    ],
+    "SSESpecification": {
+     "SSEEnabled": true
+    },
+    "TableName": "SatyaMool-Idempotency",
+    "TimeToLiveSpecification": {
+     "AttributeName": "ttl",
+     "Enabled": true
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/IdempotencyTable/Resource"
+   }
+  },
+  "OcrFunctionServiceRoleFE34B4A7": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/OcrFunction/Function/ServiceRole/Resource"
+   }
+  },
+  "OcrFunctionServiceRoleDefaultPolicy00FE4859": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "textract:AnalyzeDocument",
+        "textract:GetDocumentAnalysis",
+        "textract:StartDocumentAnalysis",
+        "xray:PutTelemetryRecords",
+        "xray:PutTraceSegments"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": [
+        "s3:GetBucket*",
+        "s3:GetObject*",
+        "s3:List*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "DocumentBucketAE41E5A9",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "DocumentBucketAE41E5A9",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable",
+        "dynamodb:GetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:PutItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:UpdateItem"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "DocumentsTable7E808EE5",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "IdempotencyTable22A5A209",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "DocumentsTable7E808EE5",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "sqs:ChangeMessageVisibility",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:GetQueueUrl",
+        "sqs:ReceiveMessage"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "DocumentProcessingQueueB731B00D",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "OcrFunctionServiceRoleDefaultPolicy00FE4859",
+    "Roles": [
+     {
+      "Ref": "OcrFunctionServiceRoleFE34B4A7"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/OcrFunction/Function/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "OcrFunctionAC55C221": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
+     "S3Key": "c925bbc723c2487dbf9545b8467164c5b5cc0a02217631c2af4ba0bd35053fd8.zip"
+    },
+    "Description": "OCR processing Lambda function using Amazon Textract",
+    "Environment": {
+     "Variables": {
+      "DOCUMENTS_TABLE_NAME": {
+       "Ref": "DocumentsTable7E808EE5"
+      },
+      "QUEUE_URL": {
+       "Ref": "DocumentProcessingQueueB731B00D"
+      },
+      "LOG_LEVEL": "INFO",
+      "AWS_XRAY_TRACING_NAME": "SatyaMool-OCR-Processor"
+     }
+    },
+    "FunctionName": "SatyaMool-OCR-Processor",
+    "Handler": "handler.lambda_handler",
+    "Layers": [
+     {
+      "Ref": "LambdaLayersPythonCommonLayer321F0602"
+     }
+    ],
+    "MemorySize": 512,
+    "Role": {
+     "Fn::GetAtt": [
+      "OcrFunctionServiceRoleFE34B4A7",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.12",
+    "Timeout": 300,
+    "TracingConfig": {
+     "Mode": "Active"
+    }
+   },
+   "DependsOn": [
+    "OcrFunctionServiceRoleDefaultPolicy00FE4859",
+    "OcrFunctionServiceRoleFE34B4A7"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/OcrFunction/Function/Resource",
+    "aws:asset:path": "asset.c925bbc723c2487dbf9545b8467164c5b5cc0a02217631c2af4ba0bd35053fd8",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "OcrFunctionSqsEventSourceSatyaMoolStackDocumentProcessingQueueADC6574ABE0F1993": {
+   "Type": "AWS::Lambda::EventSourceMapping",
+   "Properties": {
+    "BatchSize": 10,
+    "EventSourceArn": {
+     "Fn::GetAtt": [
+      "DocumentProcessingQueueB731B00D",
+      "Arn"
+     ]
+    },
+    "FunctionName": {
+     "Ref": "OcrFunctionAC55C221"
+    },
+    "FunctionResponseTypes": [
+     "ReportBatchItemFailures"
+    ],
+    "MaximumBatchingWindowInSeconds": 5
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/OcrFunction/Function/SqsEventSource:SatyaMoolStackDocumentProcessingQueueADC6574A/Resource"
+   }
+  },
+  "UsersTable9725E9C8": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "userId",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "userId",
+      "KeyType": "HASH"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": true
+    },
+    "SSESpecification": {
+     "SSEEnabled": true
+    },
+    "TableName": "SatyaMool-Users"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/UsersTable/Resource"
+   }
+  },
+  "PropertiesTable324F3970": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "propertyId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "userId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "createdAt",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "status",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "userId-createdAt-index",
+      "KeySchema": [
+       {
+        "AttributeName": "userId",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "createdAt",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     },
+     {
+      "IndexName": "userId-status-index",
+      "KeySchema": [
+       {
+        "AttributeName": "userId",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "status",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "propertyId",
+      "KeyType": "HASH"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": true
+    },
+    "SSESpecification": {
+     "SSEEnabled": true
+    },
+    "StreamSpecification": {
+     "StreamViewType": "NEW_AND_OLD_IMAGES"
+    },
+    "TableName": "SatyaMool-Properties"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/PropertiesTable/Resource"
+   }
+  },
+  "NotificationsTable76DCFC6C": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "notificationId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "userId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "createdAt",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "userId-createdAt-index",
+      "KeySchema": [
+       {
+        "AttributeName": "userId",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "createdAt",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "notificationId",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "userId",
+      "KeyType": "RANGE"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": true
+    },
+    "SSESpecification": {
+     "SSEEnabled": true
+    },
+    "TableName": "SatyaMool-Notifications"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/NotificationsTable/Resource"
+   }
+  },
+  "NotificationFunctionServiceRole9B1ED7FC": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/NotificationFunction/Function/ServiceRole/Resource"
+   }
+  },
+  "NotificationFunctionServiceRoleDefaultPolicy5AEA6DB9": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:ListStreams",
+        "ses:SendEmail",
+        "ses:SendRawEmail",
+        "xray:PutTelemetryRecords",
+        "xray:PutTraceSegments"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DescribeTable",
+        "dynamodb:GetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:Query",
+        "dynamodb:Scan"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "PropertiesTable324F3970",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "UsersTable9725E9C8",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "PropertiesTable324F3970",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable",
+        "dynamodb:GetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:PutItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:UpdateItem"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "NotificationsTable76DCFC6C",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "NotificationsTable76DCFC6C",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:DescribeStream",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "DocumentsTable7E808EE5",
+          "StreamArn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "PropertiesTable324F3970",
+          "StreamArn"
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "NotificationFunctionServiceRoleDefaultPolicy5AEA6DB9",
+    "Roles": [
+     {
+      "Ref": "NotificationFunctionServiceRole9B1ED7FC"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/NotificationFunction/Function/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "NotificationFunction5C546D46": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
+     "S3Key": "b1430ced2d872442bbf29337e3ab9474e2909529a1c2bf10bc849820e5d2ac87.zip"
+    },
+    "Description": "Notification Lambda function for email and in-app notifications",
+    "Environment": {
+     "Variables": {
+      "USERS_TABLE_NAME": {
+       "Ref": "UsersTable9725E9C8"
+      },
+      "PROPERTIES_TABLE_NAME": {
+       "Ref": "PropertiesTable324F3970"
+      },
+      "NOTIFICATIONS_TABLE_NAME": {
+       "Ref": "NotificationsTable76DCFC6C"
+      },
+      "FROM_EMAIL": "noreply@satyamool.com",
+      "FRONTEND_URL": "https://app.satyamool.com",
+      "LOG_LEVEL": "INFO",
+      "AWS_XRAY_TRACING_NAME": "SatyaMool-Notification-Processor"
+     }
+    },
+    "FunctionName": "SatyaMool-Notification-Processor",
+    "Handler": "notifications/index.handler",
+    "Layers": [
+     {
+      "Ref": "LambdaLayersAwsSdkLayer51AB3FF6"
+     },
+     {
+      "Ref": "LambdaLayersNodejsCommonLayer122327BB"
+     }
+    ],
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "NotificationFunctionServiceRole9B1ED7FC",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 30,
+    "TracingConfig": {
+     "Mode": "Active"
+    }
+   },
+   "DependsOn": [
+    "NotificationFunctionServiceRoleDefaultPolicy5AEA6DB9",
+    "NotificationFunctionServiceRole9B1ED7FC"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/NotificationFunction/Function/Resource",
+    "aws:asset:path": "asset.b1430ced2d872442bbf29337e3ab9474e2909529a1c2bf10bc849820e5d2ac87",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "NotificationFunctionDynamoDBEventSourceSatyaMoolStackPropertiesTable37E79CFE10359F03": {
+   "Type": "AWS::Lambda::EventSourceMapping",
+   "Properties": {
+    "BatchSize": 10,
+    "EventSourceArn": {
+     "Fn::GetAtt": [
+      "PropertiesTable324F3970",
+      "StreamArn"
+     ]
+    },
+    "FunctionName": {
+     "Ref": "NotificationFunction5C546D46"
+    },
+    "FunctionResponseTypes": [
+     "ReportBatchItemFailures"
+    ],
+    "MaximumBatchingWindowInSeconds": 5,
+    "MaximumRetryAttempts": 3,
+    "StartingPosition": "LATEST"
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/NotificationFunction/Function/DynamoDBEventSource:SatyaMoolStackPropertiesTable37E79CFE/Resource"
+   }
+  },
+  "NotificationFunctionDynamoDBEventSourceSatyaMoolStackDocumentsTableD51576E3608B9636": {
+   "Type": "AWS::Lambda::EventSourceMapping",
+   "Properties": {
+    "BatchSize": 10,
+    "EventSourceArn": {
+     "Fn::GetAtt": [
+      "DocumentsTable7E808EE5",
+      "StreamArn"
+     ]
+    },
+    "FunctionName": {
+     "Ref": "NotificationFunction5C546D46"
+    },
+    "FunctionResponseTypes": [
+     "ReportBatchItemFailures"
+    ],
+    "MaximumBatchingWindowInSeconds": 5,
+    "MaximumRetryAttempts": 3,
+    "StartingPosition": "LATEST"
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/NotificationFunction/Function/DynamoDBEventSource:SatyaMoolStackDocumentsTableD51576E3/Resource"
+   }
+  },
+  "LineageTableED19B650": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "propertyId",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "propertyId",
+      "KeyType": "HASH"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": true
+    },
+    "SSESpecification": {
+     "SSEEnabled": true
+    },
+    "TableName": "SatyaMool-Lineage"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/LineageTable/Resource"
+   }
+  },
+  "TrustScoresTableD197235C": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "propertyId",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "propertyId",
+      "KeyType": "HASH"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": true
+    },
+    "SSESpecification": {
+     "SSEEnabled": true
+    },
+    "TableName": "SatyaMool-TrustScores"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/TrustScoresTable/Resource"
+   }
+  },
+  "AuditLogsTable7D096F6F": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "logId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "timestamp",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "userId",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "userId-timestamp-index",
+      "KeySchema": [
+       {
+        "AttributeName": "userId",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "timestamp",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "logId",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "timestamp",
+      "KeyType": "RANGE"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": true
+    },
+    "SSESpecification": {
+     "SSEEnabled": true
+    },
+    "TableName": "SatyaMool-AuditLogs"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/AuditLogsTable/Resource"
+   }
+  },
+  "StatePortalConfigTable53B4B507": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "state",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "state",
+      "KeyType": "HASH"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": true
+    },
+    "SSESpecification": {
+     "SSEEnabled": true
+    },
+    "TableName": "SatyaMool-StatePortalConfigurations"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/StatePortalConfigTable/Resource"
+   }
+  },
+  "CleanupDeactivatedAccountsFunctionServiceRole2ED5E123": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/CleanupDeactivatedAccountsFunction/Function/ServiceRole/Resource"
+   }
+  },
+  "CleanupDeactivatedAccountsFunctionServiceRoleDefaultPolicyFF16D250": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "cognito-idp:AdminDeleteUser",
+        "xray:PutTelemetryRecords",
+        "xray:PutTraceSegments"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable",
+        "dynamodb:GetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:PutItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:UpdateItem"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "DocumentsTable7E808EE5",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "LineageTableED19B650",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "NotificationsTable76DCFC6C",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "PropertiesTable324F3970",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "TrustScoresTableD197235C",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "UsersTable9725E9C8",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "DocumentsTable7E808EE5",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "NotificationsTable76DCFC6C",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "PropertiesTable324F3970",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchWriteItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "AuditLogsTable7D096F6F",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "AuditLogsTable7D096F6F",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "s3:Abort*",
+        "s3:DeleteObject*",
+        "s3:GetBucket*",
+        "s3:GetObject*",
+        "s3:List*",
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "DocumentBucketAE41E5A9",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "DocumentBucketAE41E5A9",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "CleanupDeactivatedAccountsFunctionServiceRoleDefaultPolicyFF16D250",
+    "Roles": [
+     {
+      "Ref": "CleanupDeactivatedAccountsFunctionServiceRole2ED5E123"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/CleanupDeactivatedAccountsFunction/Function/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "CleanupDeactivatedAccountsFunction87E3BE00": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
+     "S3Key": "b1430ced2d872442bbf29337e3ab9474e2909529a1c2bf10bc849820e5d2ac87.zip"
+    },
+    "Description": "Scheduled Lambda for cleaning up deactivated accounts after 30 days",
+    "Environment": {
+     "Variables": {
+      "USERS_TABLE_NAME": {
+       "Ref": "UsersTable9725E9C8"
+      },
+      "PROPERTIES_TABLE_NAME": {
+       "Ref": "PropertiesTable324F3970"
+      },
+      "DOCUMENTS_TABLE_NAME": {
+       "Ref": "DocumentsTable7E808EE5"
+      },
+      "LINEAGE_TABLE_NAME": {
+       "Ref": "LineageTableED19B650"
+      },
+      "TRUST_SCORES_TABLE_NAME": {
+       "Ref": "TrustScoresTableD197235C"
+      },
+      "NOTIFICATIONS_TABLE_NAME": {
+       "Ref": "NotificationsTable76DCFC6C"
+      },
+      "AUDIT_LOGS_TABLE_NAME": {
+       "Ref": "AuditLogsTable7D096F6F"
+      },
+      "DOCUMENT_BUCKET_NAME": {
+       "Ref": "DocumentBucketAE41E5A9"
+      },
+      "USER_POOL_ID": "",
+      "LOG_LEVEL": "INFO",
+      "AWS_XRAY_TRACING_NAME": "SatyaMool-Cleanup-Deactivated-Accounts"
+     }
+    },
+    "FunctionName": "SatyaMool-Cleanup-Deactivated-Accounts",
+    "Handler": "admin/cleanup-deactivated-accounts.handler",
+    "Layers": [
+     {
+      "Ref": "LambdaLayersAwsSdkLayer51AB3FF6"
+     },
+     {
+      "Ref": "LambdaLayersNodejsCommonLayer122327BB"
+     }
+    ],
+    "MemorySize": 512,
+    "Role": {
+     "Fn::GetAtt": [
+      "CleanupDeactivatedAccountsFunctionServiceRole2ED5E123",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 900,
+    "TracingConfig": {
+     "Mode": "Active"
+    }
+   },
+   "DependsOn": [
+    "CleanupDeactivatedAccountsFunctionServiceRoleDefaultPolicyFF16D250",
+    "CleanupDeactivatedAccountsFunctionServiceRole2ED5E123"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/CleanupDeactivatedAccountsFunction/Function/Resource",
+    "aws:asset:path": "asset.b1430ced2d872442bbf29337e3ab9474e2909529a1c2bf10bc849820e5d2ac87",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "CleanupDeactivatedAccountsRule62EA714D": {
+   "Type": "AWS::Events::Rule",
+   "Properties": {
+    "Description": "Trigger account cleanup Lambda daily at 2 AM UTC",
+    "Name": "SatyaMool-Daily-Account-Cleanup",
+    "ScheduleExpression": "cron(0 2 * * ? *)",
+    "State": "ENABLED",
+    "Targets": [
+     {
+      "Arn": {
+       "Fn::GetAtt": [
+        "CleanupDeactivatedAccountsFunction87E3BE00",
+        "Arn"
+       ]
+      },
+      "Id": "Target0"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/CleanupDeactivatedAccountsRule/Resource"
+   }
+  },
+  "CleanupDeactivatedAccountsRuleAllowEventRuleSatyaMoolStackCleanupDeactivatedAccountsFunction01F41953709F877E": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "CleanupDeactivatedAccountsFunction87E3BE00",
+      "Arn"
+     ]
+    },
+    "Principal": "events.amazonaws.com",
+    "SourceArn": {
+     "Fn::GetAtt": [
+      "CleanupDeactivatedAccountsRule62EA714D",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/CleanupDeactivatedAccountsRule/AllowEventRuleSatyaMoolStackCleanupDeactivatedAccountsFunction01F41953"
+   }
+  },
+  "AlarmNotificationTopic58BFACC9": {
+   "Type": "AWS::SNS::Topic",
+   "Properties": {
+    "DisplayName": "SatyaMool Alarm Notifications",
+    "TopicName": "SatyaMool-Alarm-Notifications"
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/AlarmNotificationTopic/Resource"
+   }
+  },
+  "FrontendBucketEFE2E19C": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketEncryption": {
+     "ServerSideEncryptionConfiguration": [
+      {
+       "ServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+       }
+      }
+     ]
+    },
+    "BucketName": "satyamool-frontend-339648407295",
+    "LifecycleConfiguration": {
+     "Rules": [
+      {
+       "Id": "DeleteOldVersions",
+       "NoncurrentVersionExpiration": {
+        "NoncurrentDays": 30
+       },
+       "Status": "Enabled"
+      }
+     ]
+    },
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "BlockPublicPolicy": true,
+     "IgnorePublicAcls": true,
+     "RestrictPublicBuckets": true
+    }
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/FrontendBucket/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/22QQU/DMAyFf8vunhndxH1DcAHEaCeuk5uaKWublDrZVEX57yjphITE6X1+L7b0UmCxucfVgq6yVE277HSNoXKkWqCrHENHfd0QhleaePzkUbQ18Phl/szP3ih3C3756cLGVdaPit9oGLQ5pfh/d89jryXdiiDrI4mwE9wmAVlj2HnVstuRMMyYlmaK0PaC4YWn5CXZdpokDRkiyLdg+PDsOZkZIjSTod42NYYD1V1OMkTQ1GMo7exl3dtOq3x+pgicWgiG0t+e+bQpRjAc7KBVPpcgRsgtKkenW9d37wbvoGTJvxDB2IbxLHeXYoMPuFqcRevl6I3TPWM56w/l7bBkpwEAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "LambdaLayersNodejsCommonLayerArn1AFAE32E": {
+   "Description": "ARN of Node.js common layer",
+   "Value": {
+    "Ref": "LambdaLayersNodejsCommonLayer122327BB"
+   },
+   "Export": {
+    "Name": "SatyaMool-NodejsCommonLayerArn"
+   }
+  },
+  "LambdaLayersPythonCommonLayerArnF311EE92": {
+   "Description": "ARN of Python common layer",
+   "Value": {
+    "Ref": "LambdaLayersPythonCommonLayer321F0602"
+   },
+   "Export": {
+    "Name": "SatyaMool-PythonCommonLayerArn"
+   }
+  },
+  "LambdaLayersAwsSdkLayerArnE8BFEC60": {
+   "Description": "ARN of AWS SDK layer",
+   "Value": {
+    "Ref": "LambdaLayersAwsSdkLayer51AB3FF6"
+   },
+   "Export": {
+    "Name": "SatyaMool-AwsSdkLayerArn"
+   }
+  },
+  "OcrFunctionFunctionArn5D824ECC": {
+   "Description": "ARN of SatyaMool-OCR-Processor",
+   "Value": {
+    "Fn::GetAtt": [
+     "OcrFunctionAC55C221",
+     "Arn"
+    ]
+   }
+  },
+  "OcrFunctionOptimizationSummary673887D5": {
+   "Description": "Optimization summary for SatyaMool-OCR-Processor",
+   "Value": "{\"function\":\"SatyaMool-OCR-Processor\",\"architecture\":\"ARM64\",\"layers\":1,\"provisionedConcurrency\":false,\"memorySize\":512,\"timeout\":300}"
+  },
+  "DocumentBucketName": {
+   "Description": "S3 bucket name for document storage",
+   "Value": {
+    "Ref": "DocumentBucketAE41E5A9"
+   },
+   "Export": {
+    "Name": "SatyaMool-DocumentBucketName"
+   }
+  },
+  "AuditLogBucketName": {
+   "Description": "S3 bucket name for audit logs",
+   "Value": {
+    "Ref": "AuditLogBucketCB3C9E27"
+   },
+   "Export": {
+    "Name": "SatyaMool-AuditLogBucketName"
+   }
+  },
+  "ProcessingQueueUrl": {
+   "Description": "SQS queue URL for document processing",
+   "Value": {
+    "Ref": "DocumentProcessingQueueB731B00D"
+   },
+   "Export": {
+    "Name": "SatyaMool-ProcessingQueueUrl"
+   }
+  },
+  "ProcessingQueueArn": {
+   "Description": "SQS queue ARN for document processing",
+   "Value": {
+    "Fn::GetAtt": [
+     "DocumentProcessingQueueB731B00D",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "SatyaMool-ProcessingQueueArn"
+   }
+  },
+  "EncryptionKeyId": {
+   "Description": "KMS key ID for encryption",
+   "Value": {
+    "Ref": "SatyaMoolEncryptionKeyB4E20C38"
+   },
+   "Export": {
+    "Name": "SatyaMool-EncryptionKeyId"
+   }
+  },
+  "DocumentsTableName": {
+   "Description": "DynamoDB table name for documents",
+   "Value": {
+    "Ref": "DocumentsTable7E808EE5"
+   },
+   "Export": {
+    "Name": "SatyaMool-DocumentsTableName"
+   }
+  },
+  "OcrLambdaArn": {
+   "Description": "OCR Lambda function ARN",
+   "Value": {
+    "Fn::GetAtt": [
+     "OcrFunctionAC55C221",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "SatyaMool-OcrLambdaArn"
+   }
+  },
+  "NotificationFunctionFunctionArn84544E76": {
+   "Description": "ARN of SatyaMool-Notification-Processor",
+   "Value": {
+    "Fn::GetAtt": [
+     "NotificationFunction5C546D46",
+     "Arn"
+    ]
+   }
+  },
+  "NotificationFunctionOptimizationSummaryA851423B": {
+   "Description": "Optimization summary for SatyaMool-Notification-Processor",
+   "Value": "{\"function\":\"SatyaMool-Notification-Processor\",\"architecture\":\"ARM64\",\"layers\":2,\"provisionedConcurrency\":false,\"memorySize\":256,\"timeout\":30}"
+  },
+  "UsersTableName": {
+   "Description": "DynamoDB table name for users",
+   "Value": {
+    "Ref": "UsersTable9725E9C8"
+   },
+   "Export": {
+    "Name": "SatyaMool-UsersTableName"
+   }
+  },
+  "PropertiesTableName": {
+   "Description": "DynamoDB table name for properties",
+   "Value": {
+    "Ref": "PropertiesTable324F3970"
+   },
+   "Export": {
+    "Name": "SatyaMool-PropertiesTableName"
+   }
+  },
+  "NotificationsTableName": {
+   "Description": "DynamoDB table name for notifications",
+   "Value": {
+    "Ref": "NotificationsTable76DCFC6C"
+   },
+   "Export": {
+    "Name": "SatyaMool-NotificationsTableName"
+   }
+  },
+  "NotificationLambdaArn": {
+   "Description": "Notification Lambda function ARN",
+   "Value": {
+    "Fn::GetAtt": [
+     "NotificationFunction5C546D46",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "SatyaMool-NotificationLambdaArn"
+   }
+  },
+  "CleanupDeactivatedAccountsFunctionFunctionArn4EB738AC": {
+   "Description": "ARN of SatyaMool-Cleanup-Deactivated-Accounts",
+   "Value": {
+    "Fn::GetAtt": [
+     "CleanupDeactivatedAccountsFunction87E3BE00",
+     "Arn"
+    ]
+   }
+  },
+  "CleanupDeactivatedAccountsFunctionOptimizationSummary581B105A": {
+   "Description": "Optimization summary for SatyaMool-Cleanup-Deactivated-Accounts",
+   "Value": "{\"function\":\"SatyaMool-Cleanup-Deactivated-Accounts\",\"architecture\":\"ARM64\",\"layers\":2,\"provisionedConcurrency\":false,\"memorySize\":512,\"timeout\":900}"
+  },
+  "CleanupLambdaArn": {
+   "Description": "Cleanup Lambda function ARN",
+   "Value": {
+    "Fn::GetAtt": [
+     "CleanupDeactivatedAccountsFunction87E3BE00",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "SatyaMool-CleanupLambdaArn"
+   }
+  },
+  "LineageTableName": {
+   "Description": "DynamoDB table name for lineage",
+   "Value": {
+    "Ref": "LineageTableED19B650"
+   },
+   "Export": {
+    "Name": "SatyaMool-LineageTableName"
+   }
+  },
+  "TrustScoresTableName": {
+   "Description": "DynamoDB table name for trust scores",
+   "Value": {
+    "Ref": "TrustScoresTableD197235C"
+   },
+   "Export": {
+    "Name": "SatyaMool-TrustScoresTableName"
+   }
+  },
+  "AuditLogsTableName": {
+   "Description": "DynamoDB table name for audit logs",
+   "Value": {
+    "Ref": "AuditLogsTable7D096F6F"
+   },
+   "Export": {
+    "Name": "SatyaMool-AuditLogsTableName"
+   }
+  },
+  "AlarmTopicArn": {
+   "Description": "SNS topic ARN for alarm notifications",
+   "Value": {
+    "Ref": "AlarmNotificationTopic58BFACC9"
+   },
+   "Export": {
+    "Name": "SatyaMool-AlarmTopicArn"
+   }
+  },
+  "MonitoringNote": {
+   "Description": "Monitoring setup note",
+   "Value": "CloudWatch dashboards and alarms will be added in next deployment to avoid circular dependencies"
+  },
+  "DlqProcessorNote": {
+   "Description": "DLQ processor setup note",
+   "Value": "DLQ Processor Lambda will be added in next deployment to avoid circular dependencies"
+  },
+  "FrontendBucketName": {
+   "Description": "S3 bucket name for frontend static assets",
+   "Value": {
+    "Ref": "FrontendBucketEFE2E19C"
+   },
+   "Export": {
+    "Name": "SatyaMool-FrontendBucketName"
+   }
+  },
+  "CloudFrontNote": {
+   "Description": "CloudFront status note",
+   "Value": "CloudFront distribution disabled - account verification required. Contact AWS Support."
+  },
+  "DocumentBucketAccelerateEndpoint": {
+   "Description": "S3 Transfer Acceleration endpoint for document uploads",
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      {
+       "Ref": "DocumentBucketAE41E5A9"
+      },
+      ".s3-accelerate.amazonaws.com"
+     ]
+    ]
+   },
+   "Export": {
+    "Name": "SatyaMool-DocumentBucketAccelerateEndpoint"
+   }
+  },
+  "S3OptimizationSummary": {
+   "Description": "S3 and CloudFront optimization summary",
+   "Value": "S3 optimizations: Transfer Acceleration enabled, multipart upload cleanup (7 days), CloudFront CDN with 24h cache"
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

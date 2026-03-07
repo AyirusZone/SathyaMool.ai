@@ -54,7 +54,8 @@ const Register: React.FC = () => {
 
       const response = await authService.register(data);
 
-      if (response.requiresOtp) {
+      // Always show OTP dialog if user is not confirmed
+      if (!response.userConfirmed) {
         setOtpDialog(true);
       } else {
         navigate('/login');
@@ -71,8 +72,14 @@ const Register: React.FC = () => {
     setLoading(true);
 
     try {
-      await authService.verifyOtp({ phoneNumber, otp });
-      navigate('/dashboard');
+      const username = tab === 0 ? email : phoneNumber;
+      await authService.verifyOtp({ username, code: otp });
+      
+      // After successful verification, redirect to login
+      setOtpDialog(false);
+      navigate('/login', { 
+        state: { message: 'Account verified successfully! Please login.' } 
+      });
     } catch (err: any) {
       setError(err.response?.data?.message || 'OTP verification failed.');
     } finally {
@@ -178,14 +185,17 @@ const Register: React.FC = () => {
       </Box>
 
       <Dialog open={otpDialog} onClose={() => !loading && setOtpDialog(false)}>
-        <DialogTitle>Verify OTP</DialogTitle>
+        <DialogTitle>Verify Your Account</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            Enter the OTP sent to {phoneNumber}
+            {tab === 0 
+              ? `Enter the verification code sent to ${email}`
+              : `Enter the verification code sent to ${phoneNumber}`
+            }
           </Typography>
           <TextField
             fullWidth
-            label="OTP"
+            label="Verification Code"
             value={otp}
             onChange={(e) => setOtp(e.target.value)}
             inputProps={{ maxLength: 6 }}

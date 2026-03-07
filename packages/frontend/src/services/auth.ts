@@ -32,8 +32,8 @@ export interface AuthResponse {
 }
 
 export interface VerifyOtpRequest {
-  phoneNumber: string;
-  otp: string;
+  username: string; // email or phone number
+  code: string;
 }
 
 class AuthService {
@@ -47,14 +47,17 @@ class AuthService {
     return response.data;
   }
 
-  async register(data: RegisterRequest): Promise<{ message: string; requiresOtp: boolean }> {
+  async register(data: RegisterRequest): Promise<{ message: string; requiresOtp: boolean; userConfirmed: boolean }> {
     const response = await api.post('/auth/register', data);
-    return response.data;
+    return {
+      message: response.data.message,
+      requiresOtp: !response.data.userConfirmed,
+      userConfirmed: response.data.userConfirmed || false
+    };
   }
 
-  async verifyOtp(data: VerifyOtpRequest): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>('/auth/verify-otp', data);
-    this.setAuthData(response.data);
+  async verifyOtp(data: VerifyOtpRequest): Promise<{ message: string }> {
+    const response = await api.post('/auth/verify-otp', data);
     return response.data;
   }
 

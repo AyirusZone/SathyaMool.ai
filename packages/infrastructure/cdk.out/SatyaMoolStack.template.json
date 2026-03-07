@@ -1000,6 +1000,156 @@
     "aws:cdk:path": "SatyaMoolStack/NotificationFunction/Function/DynamoDBEventSource:SatyaMoolStackDocumentsTableD51576E3/Resource"
    }
   },
+  "GetNotificationsFunctionServiceRole665E48B9": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/GetNotificationsFunction/Function/ServiceRole/Resource"
+   }
+  },
+  "GetNotificationsFunctionServiceRoleDefaultPolicyF3AD956E": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "xray:PutTelemetryRecords",
+        "xray:PutTraceSegments"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DescribeTable",
+        "dynamodb:GetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:Query",
+        "dynamodb:Scan"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "NotificationsTable76DCFC6C",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "NotificationsTable76DCFC6C",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "GetNotificationsFunctionServiceRoleDefaultPolicyF3AD956E",
+    "Roles": [
+     {
+      "Ref": "GetNotificationsFunctionServiceRole665E48B9"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/GetNotificationsFunction/Function/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "GetNotificationsFunction4626BE37": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
+     "S3Key": "6e389971bc0ed4a2b0e9808fc2ca8136790d1515ff49ae733d42ccf774d60ca2.zip"
+    },
+    "Description": "Lambda function for retrieving user notifications via API",
+    "Environment": {
+     "Variables": {
+      "NOTIFICATIONS_TABLE_NAME": {
+       "Ref": "NotificationsTable76DCFC6C"
+      },
+      "LOG_LEVEL": "INFO",
+      "AWS_XRAY_TRACING_NAME": "SatyaMool-Get-Notifications"
+     }
+    },
+    "FunctionName": "SatyaMool-Get-Notifications",
+    "Handler": "notifications/get-notifications.handler",
+    "Layers": [
+     {
+      "Ref": "LambdaLayersAwsSdkLayer51AB3FF6"
+     },
+     {
+      "Ref": "LambdaLayersNodejsCommonLayer122327BB"
+     }
+    ],
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "GetNotificationsFunctionServiceRole665E48B9",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 10,
+    "TracingConfig": {
+     "Mode": "Active"
+    }
+   },
+   "DependsOn": [
+    "GetNotificationsFunctionServiceRoleDefaultPolicyF3AD956E",
+    "GetNotificationsFunctionServiceRole665E48B9"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/GetNotificationsFunction/Function/Resource",
+    "aws:asset:path": "asset.6e389971bc0ed4a2b0e9808fc2ca8136790d1515ff49ae733d42ccf774d60ca2",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
   "LineageTableED19B650": {
    "Type": "AWS::DynamoDB::Table",
    "Properties": {
@@ -6922,7 +7072,7 @@
     "aws:cdk:path": "SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Account"
    }
   },
-  "MainApiGatewaySatyaMoolMainApiDeploymentCB4C84D7ecfc58d5a487460896597c63b63b44a4": {
+  "MainApiGatewaySatyaMoolMainApiDeploymentCB4C84D7fe7d24d259568f3c2dc9995f54b4107e": {
    "Type": "AWS::ApiGateway::Deployment",
    "Properties": {
     "Description": "SatyaMool Property Management API",
@@ -6954,6 +7104,9 @@
     "MainApiGatewaySatyaMoolMainApidocumentsuploadurlOPTIONSF1F0B279",
     "MainApiGatewaySatyaMoolMainApidocumentsuploadurlPOSTCAC8D979",
     "MainApiGatewaySatyaMoolMainApidocumentsuploadurl93B8AF84",
+    "MainApiGatewaySatyaMoolMainApinotificationsGET3541CE4B",
+    "MainApiGatewaySatyaMoolMainApinotificationsOPTIONSDB4856DC",
+    "MainApiGatewaySatyaMoolMainApinotificationsB517D73A",
     "MainApiGatewaySatyaMoolMainApiOPTIONSA945E8A1",
     "MainApiGatewaySatyaMoolMainApipropertiespropertyIdDELETECD78D844",
     "MainApiGatewaySatyaMoolMainApipropertiespropertyIdGETA0361330",
@@ -6991,7 +7144,7 @@
      "Format": "{\"requestId\":\"$context.requestId\",\"ip\":\"$context.identity.sourceIp\",\"user\":\"$context.identity.user\",\"caller\":\"$context.identity.caller\",\"requestTime\":\"$context.requestTime\",\"httpMethod\":\"$context.httpMethod\",\"resourcePath\":\"$context.resourcePath\",\"status\":\"$context.status\",\"protocol\":\"$context.protocol\",\"responseLength\":\"$context.responseLength\"}"
     },
     "DeploymentId": {
-     "Ref": "MainApiGatewaySatyaMoolMainApiDeploymentCB4C84D7ecfc58d5a487460896597c63b63b44a4"
+     "Ref": "MainApiGatewaySatyaMoolMainApiDeploymentCB4C84D7fe7d24d259568f3c2dc9995f54b4107e"
     },
     "MethodSettings": [
      {
@@ -9142,6 +9295,169 @@
     "aws:cdk:path": "SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/register/POST/Resource"
    }
   },
+  "MainApiGatewaySatyaMoolMainApinotificationsB517D73A": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Fn::GetAtt": [
+      "MainApiGatewaySatyaMoolMainApiC8F7825B",
+      "RootResourceId"
+     ]
+    },
+    "PathPart": "notifications",
+    "RestApiId": {
+     "Ref": "MainApiGatewaySatyaMoolMainApiC8F7825B"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/notifications/Resource"
+   }
+  },
+  "MainApiGatewaySatyaMoolMainApinotificationsOPTIONSDB4856DC": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
+        "method.response.header.Access-Control-Allow-Credentials": "'true'",
+        "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true,
+       "method.response.header.Access-Control-Allow-Credentials": true,
+       "method.response.header.Access-Control-Max-Age": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "MainApiGatewaySatyaMoolMainApinotificationsB517D73A"
+    },
+    "RestApiId": {
+     "Ref": "MainApiGatewaySatyaMoolMainApiC8F7825B"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/notifications/OPTIONS/Resource"
+   }
+  },
+  "MainApiGatewaySatyaMoolMainApinotificationsGETApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33GETnotificationsEC27A3DB": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "GetNotificationsFunction4626BE37",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:ap-south-1:339648407295:",
+       {
+        "Ref": "MainApiGatewaySatyaMoolMainApiC8F7825B"
+       },
+       "/",
+       {
+        "Ref": "MainApiGatewaySatyaMoolMainApiDeploymentStagev17310331D"
+       },
+       "/GET/notifications"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/notifications/GET/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.GET..notifications"
+   }
+  },
+  "MainApiGatewaySatyaMoolMainApinotificationsGETApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33GETnotifications14396587": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "GetNotificationsFunction4626BE37",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:ap-south-1:339648407295:",
+       {
+        "Ref": "MainApiGatewaySatyaMoolMainApiC8F7825B"
+       },
+       "/test-invoke-stage/GET/notifications"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/notifications/GET/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.GET..notifications"
+   }
+  },
+  "MainApiGatewaySatyaMoolMainApinotificationsGET3541CE4B": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "CUSTOM",
+    "AuthorizerId": {
+     "Ref": "MainApiGatewayJwtAuthorizerB6E88B49"
+    },
+    "HttpMethod": "GET",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:aws:apigateway:ap-south-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "GetNotificationsFunction4626BE37",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "MainApiGatewaySatyaMoolMainApinotificationsB517D73A"
+    },
+    "RestApiId": {
+     "Ref": "MainApiGatewaySatyaMoolMainApiC8F7825B"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/notifications/GET/Resource"
+   }
+  },
   "MainApiGatewayJwtAuthorizerB6E88B49": {
    "Type": "AWS::ApiGateway::Authorizer",
    "Properties": {
@@ -9386,6 +9702,19 @@
    "Description": "Optimization summary for SatyaMool-Notification-Processor",
    "Value": "{\"function\":\"SatyaMool-Notification-Processor\",\"architecture\":\"ARM64\",\"layers\":2,\"provisionedConcurrency\":false,\"memorySize\":256,\"timeout\":30}"
   },
+  "GetNotificationsFunctionFunctionArnC5B9A313": {
+   "Description": "ARN of SatyaMool-Get-Notifications",
+   "Value": {
+    "Fn::GetAtt": [
+     "GetNotificationsFunction4626BE37",
+     "Arn"
+    ]
+   }
+  },
+  "GetNotificationsFunctionOptimizationSummaryC6810924": {
+   "Description": "Optimization summary for SatyaMool-Get-Notifications",
+   "Value": "{\"function\":\"SatyaMool-Get-Notifications\",\"architecture\":\"ARM64\",\"layers\":2,\"provisionedConcurrency\":false,\"memorySize\":256,\"timeout\":10}"
+  },
   "UsersTableName": {
    "Description": "DynamoDB table name for users",
    "Value": {
@@ -9423,6 +9752,18 @@
    },
    "Export": {
     "Name": "SatyaMool-NotificationLambdaArn"
+   }
+  },
+  "GetNotificationsLambdaArn": {
+   "Description": "GET Notifications Lambda function ARN",
+   "Value": {
+    "Fn::GetAtt": [
+     "GetNotificationsFunction4626BE37",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "SatyaMool-GetNotificationsLambdaArn"
    }
   },
   "CleanupDeactivatedAccountsFunctionFunctionArn4EB738AC": {

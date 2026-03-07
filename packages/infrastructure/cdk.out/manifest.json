@@ -18,7 +18,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::339648407295:role/cdk-hnb659fds-deploy-role-339648407295-ap-south-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::339648407295:role/cdk-hnb659fds-cfn-exec-role-339648407295-ap-south-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-339648407295-ap-south-1/727edb9c45b6d73bb773ca5a3908ccf43485830084ac10222a873927c75d7ef5.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-339648407295-ap-south-1/9308627564ff128566a41f8ebac6efcc5ac8f72771f3d8837cdb3f5faf3724fd.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -296,6 +296,36 @@
             "data": "NotificationFunctionOptimizationSummaryA851423B"
           }
         ],
+        "/SatyaMoolStack/GetNotificationsFunction/Function/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetNotificationsFunctionServiceRole665E48B9"
+          }
+        ],
+        "/SatyaMoolStack/GetNotificationsFunction/Function/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetNotificationsFunctionServiceRoleDefaultPolicyF3AD956E"
+          }
+        ],
+        "/SatyaMoolStack/GetNotificationsFunction/Function/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetNotificationsFunction4626BE37"
+          }
+        ],
+        "/SatyaMoolStack/GetNotificationsFunction/FunctionArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetNotificationsFunctionFunctionArnC5B9A313"
+          }
+        ],
+        "/SatyaMoolStack/GetNotificationsFunction/OptimizationSummary": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetNotificationsFunctionOptimizationSummaryC6810924"
+          }
+        ],
         "/SatyaMoolStack/UsersTableName": [
           {
             "type": "aws:cdk:logicalId",
@@ -318,6 +348,12 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "NotificationLambdaArn"
+          }
+        ],
+        "/SatyaMoolStack/GetNotificationsLambdaArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetNotificationsLambdaArn"
           }
         ],
         "/SatyaMoolStack/LineageTable": [
@@ -1141,7 +1177,7 @@
         "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Deployment/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "MainApiGatewaySatyaMoolMainApiDeploymentCB4C84D7ecfc58d5a487460896597c63b63b44a4"
+            "data": "MainApiGatewaySatyaMoolMainApiDeploymentCB4C84D7fe7d24d259568f3c2dc9995f54b4107e"
           }
         ],
         "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/DeploymentStage.v1/Resource": [
@@ -1550,6 +1586,36 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "MainApiGatewaySatyaMoolMainApidocumentsregisterPOST66A8E099"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/notifications/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApinotificationsB517D73A"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/notifications/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApinotificationsOPTIONSDB4856DC"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/notifications/GET/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.GET..notifications": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApinotificationsGETApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33GETnotificationsEC27A3DB"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/notifications/GET/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.GET..notifications": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApinotificationsGETApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33GETnotifications14396587"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/notifications/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApinotificationsGET3541CE4B"
           }
         ],
         "/SatyaMoolStack/MainApiGateway/JwtAuthorizer/Resource": [

@@ -24,6 +24,14 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Clear any expired tokens on mount
+  React.useEffect(() => {
+    // Clear localStorage to start fresh
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+  }, []);
+
   // Redirect if already authenticated
   React.useEffect(() => {
     if (authService.isAuthenticated()) {

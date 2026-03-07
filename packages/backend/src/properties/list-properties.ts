@@ -44,7 +44,8 @@ export const handler = async (
 
   try {
     // Extract userId from authorizer context
-    const userId = event.requestContext.authorizer?.claims?.sub;
+    // The authorizer puts userId in the context, not in claims
+    const userId = event.requestContext.authorizer?.userId || event.requestContext.authorizer?.claims?.sub;
     
     if (!userId) {
       return createErrorResponse(401, 'UNAUTHORIZED', 'User authentication required');

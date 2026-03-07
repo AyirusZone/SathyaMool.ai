@@ -32,7 +32,7 @@ export interface AuthResponse {
 }
 
 export interface VerifyOtpRequest {
-  phoneNumber: string;
+  identifier: string; // email or phone number
   otp: string;
 }
 
@@ -50,14 +50,20 @@ class AuthService {
     return response.data;
   }
 
-  async register(data: RegisterRequest): Promise<{ message: string; requiresOtp: boolean }> {
+  async register(data: RegisterRequest): Promise<{ message: string; requiresOtp: boolean; userConfirmed: boolean }> {
     const response = await api.post('/auth/register', data);
-    return response.data;
+    return {
+      ...response.data,
+      requiresOtp: !response.data.userConfirmed, // If not confirmed, OTP is required
+    };
   }
 
-  async verifyOtp(data: VerifyOtpRequest): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>('/auth/verify-otp', data);
-    this.setAuthData(response.data);
+  async verifyOtp(data: VerifyOtpRequest): Promise<{ message: string; userId: string; status: string }> {
+    // Backend expects { username, code }
+    const response = await api.post('/auth/verify-otp', {
+      username: data.identifier,
+      code: data.otp,
+    });
     return response.data;
   }
 

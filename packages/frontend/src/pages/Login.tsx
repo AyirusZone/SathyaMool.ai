@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useNavigate, Link as RouterLink, useLocation } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -17,12 +17,16 @@ import authService from '../services/auth';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [tab, setTab] = useState(0);
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState(
+    (location.state as any)?.message || ''
+  );
 
   // Clear any expired tokens on mount
   React.useEffect(() => {
@@ -90,6 +94,12 @@ const Login: React.FC = () => {
               <Tab label="Email" />
               <Tab label="Phone" />
             </Tabs>
+
+            {successMessage && (
+              <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccessMessage('')}>
+                {successMessage}
+              </Alert>
+            )}
 
             {error && (
               <Alert severity="error" sx={{ mb: 2 }}>

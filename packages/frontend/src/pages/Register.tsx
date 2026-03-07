@@ -181,14 +181,14 @@ const Register: React.FC = () => {
       </Box>
 
       <Dialog open={otpDialog} onClose={() => !loading && setOtpDialog(false)}>
-        <DialogTitle>Verify OTP</DialogTitle>
+        <DialogTitle>Verify Your Account</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2 }}>
             Enter the OTP sent to {tab === 0 ? email : phoneNumber}
           </Typography>
           <TextField
             fullWidth
-            label="OTP"
+            label="Verification Code"
             value={otp}
             onChange={(e) => setOtp(e.target.value)}
             inputProps={{ maxLength: 6 }}

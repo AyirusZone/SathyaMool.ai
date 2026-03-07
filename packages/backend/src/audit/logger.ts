@@ -125,22 +125,27 @@ export async function createAuditLog(params: CreateAuditLogParams): Promise<Audi
     metadata: params.metadata,
   };
 
+  // Remove undefined values to avoid DynamoDB errors
+  const cleanedEntry = Object.fromEntries(
+    Object.entries(logEntry).filter(([_, value]) => value !== undefined)
+  ) as AuditLogEntry;
+
   try {
     await docClient.send(
       new PutCommand({
         TableName: AUDIT_LOGS_TABLE,
-        Item: logEntry,
+        Item: cleanedEntry,
       })
     );
 
     console.log('Audit log created:', {
-      logId: logEntry.logId,
-      action: logEntry.action,
-      userId: logEntry.userId,
-      resourceType: logEntry.resourceType,
+      logId: cleanedEntry.logId,
+      action: cleanedEntry.action,
+      userId: cleanedEntry.userId,
+      resourceType: cleanedEntry.resourceType,
     });
 
-    return logEntry;
+    return cleanedEntry;
   } catch (error) {
     console.error('Failed to create audit log:', error);
     // Don't throw - audit logging should not break the main operation

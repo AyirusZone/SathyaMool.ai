@@ -54,14 +54,14 @@ const Register: React.FC = () => {
 
       const response = await authService.register(data);
 
-      // Always show OTP dialog if user is not confirmed
-      if (!response.userConfirmed) {
+      // Check if OTP verification is required (userConfirmed: false means OTP needed)
+      if (response.requiresOtp || !response.userConfirmed) {
         setOtpDialog(true);
       } else {
         navigate('/login');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      setError(err.response?.data?.message || 'An error occurred during registration. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -72,14 +72,10 @@ const Register: React.FC = () => {
     setLoading(true);
 
     try {
-      const username = tab === 0 ? email : phoneNumber;
-      await authService.verifyOtp({ username, code: otp });
-      
-      // After successful verification, redirect to login
-      setOtpDialog(false);
-      navigate('/login', { 
-        state: { message: 'Account verified successfully! Please login.' } 
-      });
+      const identifier = tab === 0 ? email : phoneNumber;
+      await authService.verifyOtp({ identifier, otp });
+      // After verification, redirect to login page
+      navigate('/login', { state: { message: 'Account verified successfully. Please log in.' } });
     } catch (err: any) {
       setError(err.response?.data?.message || 'OTP verification failed.');
     } finally {
@@ -188,10 +184,7 @@ const Register: React.FC = () => {
         <DialogTitle>Verify Your Account</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            {tab === 0 
-              ? `Enter the verification code sent to ${email}`
-              : `Enter the verification code sent to ${phoneNumber}`
-            }
+            Enter the OTP sent to {tab === 0 ? email : phoneNumber}
           </Typography>
           <TextField
             fullWidth

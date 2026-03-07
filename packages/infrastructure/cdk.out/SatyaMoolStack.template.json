@@ -4304,6 +4304,12 @@
         },
         {
          "Fn::GetAtt": [
+          "IdempotencyTable22A5A209",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
           "LineageTableED19B650",
           "Arn"
          ]
@@ -4474,6 +4480,9 @@
       "AUDIT_LOGS_TABLE_NAME": {
        "Ref": "AuditLogsTable7D096F6F"
       },
+      "IDEMPOTENCY_TABLE_NAME": {
+       "Ref": "IdempotencyTable22A5A209"
+      },
       "DOCUMENT_BUCKET_NAME": {
        "Ref": "DocumentBucketAE41E5A9"
       },
@@ -4606,6 +4615,12 @@
         {
          "Fn::GetAtt": [
           "DocumentsTable7E808EE5",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "IdempotencyTable22A5A209",
           "Arn"
          ]
         },
@@ -4781,6 +4796,9 @@
       "AUDIT_LOGS_TABLE_NAME": {
        "Ref": "AuditLogsTable7D096F6F"
       },
+      "IDEMPOTENCY_TABLE_NAME": {
+       "Ref": "IdempotencyTable22A5A209"
+      },
       "DOCUMENT_BUCKET_NAME": {
        "Ref": "DocumentBucketAE41E5A9"
       },
@@ -4913,6 +4931,12 @@
         {
          "Fn::GetAtt": [
           "DocumentsTable7E808EE5",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "IdempotencyTable22A5A209",
           "Arn"
          ]
         },
@@ -5088,6 +5112,9 @@
       "AUDIT_LOGS_TABLE_NAME": {
        "Ref": "AuditLogsTable7D096F6F"
       },
+      "IDEMPOTENCY_TABLE_NAME": {
+       "Ref": "IdempotencyTable22A5A209"
+      },
       "DOCUMENT_BUCKET_NAME": {
        "Ref": "DocumentBucketAE41E5A9"
       },
@@ -5220,6 +5247,12 @@
         {
          "Fn::GetAtt": [
           "DocumentsTable7E808EE5",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "IdempotencyTable22A5A209",
           "Arn"
          ]
         },
@@ -5395,6 +5428,9 @@
       "AUDIT_LOGS_TABLE_NAME": {
        "Ref": "AuditLogsTable7D096F6F"
       },
+      "IDEMPOTENCY_TABLE_NAME": {
+       "Ref": "IdempotencyTable22A5A209"
+      },
       "DOCUMENT_BUCKET_NAME": {
        "Ref": "DocumentBucketAE41E5A9"
       },
@@ -5527,6 +5563,12 @@
         {
          "Fn::GetAtt": [
           "DocumentsTable7E808EE5",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "IdempotencyTable22A5A209",
           "Arn"
          ]
         },
@@ -5702,6 +5744,9 @@
       "AUDIT_LOGS_TABLE_NAME": {
        "Ref": "AuditLogsTable7D096F6F"
       },
+      "IDEMPOTENCY_TABLE_NAME": {
+       "Ref": "IdempotencyTable22A5A209"
+      },
       "DOCUMENT_BUCKET_NAME": {
        "Ref": "DocumentBucketAE41E5A9"
       },
@@ -5834,6 +5879,12 @@
         {
          "Fn::GetAtt": [
           "DocumentsTable7E808EE5",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "IdempotencyTable22A5A209",
           "Arn"
          ]
         },
@@ -6009,6 +6060,9 @@
       "AUDIT_LOGS_TABLE_NAME": {
        "Ref": "AuditLogsTable7D096F6F"
       },
+      "IDEMPOTENCY_TABLE_NAME": {
+       "Ref": "IdempotencyTable22A5A209"
+      },
       "DOCUMENT_BUCKET_NAME": {
        "Ref": "DocumentBucketAE41E5A9"
       },
@@ -6141,6 +6195,12 @@
         {
          "Fn::GetAtt": [
           "DocumentsTable7E808EE5",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "IdempotencyTable22A5A209",
           "Arn"
          ]
         },
@@ -6316,6 +6376,9 @@
       "AUDIT_LOGS_TABLE_NAME": {
        "Ref": "AuditLogsTable7D096F6F"
       },
+      "IDEMPOTENCY_TABLE_NAME": {
+       "Ref": "IdempotencyTable22A5A209"
+      },
       "DOCUMENT_BUCKET_NAME": {
        "Ref": "DocumentBucketAE41E5A9"
       },
@@ -6448,6 +6511,12 @@
         {
          "Fn::GetAtt": [
           "DocumentsTable7E808EE5",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "IdempotencyTable22A5A209",
           "Arn"
          ]
         },
@@ -6623,6 +6692,9 @@
       "AUDIT_LOGS_TABLE_NAME": {
        "Ref": "AuditLogsTable7D096F6F"
       },
+      "IDEMPOTENCY_TABLE_NAME": {
+       "Ref": "IdempotencyTable22A5A209"
+      },
       "DOCUMENT_BUCKET_NAME": {
        "Ref": "DocumentBucketAE41E5A9"
       },
@@ -6755,6 +6827,12 @@
         {
          "Fn::GetAtt": [
           "DocumentsTable7E808EE5",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "IdempotencyTable22A5A209",
           "Arn"
          ]
         },
@@ -6929,6 +7007,9 @@
       },
       "AUDIT_LOGS_TABLE_NAME": {
        "Ref": "AuditLogsTable7D096F6F"
+      },
+      "IDEMPOTENCY_TABLE_NAME": {
+       "Ref": "IdempotencyTable22A5A209"
       },
       "DOCUMENT_BUCKET_NAME": {
        "Ref": "DocumentBucketAE41E5A9"

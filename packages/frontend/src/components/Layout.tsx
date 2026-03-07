@@ -38,6 +38,8 @@ const Layout: React.FC = () => {
       setNotifications(data);
     } catch (error) {
       console.error('Failed to load notifications:', error);
+      // Don't throw - just log the error and continue
+      setNotifications([]);
     }
   };
 

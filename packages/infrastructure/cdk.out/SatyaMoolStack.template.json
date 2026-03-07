@@ -1568,8 +1568,8 @@
     ],
     "DeletionProtection": "INACTIVE",
     "DeviceConfiguration": {
-     "ChallengeRequiredOnNewDevice": true,
-     "DeviceOnlyRememberedOnUserPrompt": true
+     "ChallengeRequiredOnNewDevice": false,
+     "DeviceOnlyRememberedOnUserPrompt": false
     },
     "EmailConfiguration": {
      "EmailSendingAccount": "COGNITO_DEFAULT",

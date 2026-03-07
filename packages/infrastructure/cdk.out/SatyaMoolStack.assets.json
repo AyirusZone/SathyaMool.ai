@@ -91,16 +91,16 @@
         }
       }
     },
-    "727edb9c45b6d73bb773ca5a3908ccf43485830084ac10222a873927c75d7ef5": {
+    "9308627564ff128566a41f8ebac6efcc5ac8f72771f3d8837cdb3f5faf3724fd": {
       "displayName": "SatyaMoolStack Template",
       "source": {
         "path": "SatyaMoolStack.template.json",
         "packaging": "file"
       },
       "destinations": {
-        "339648407295-ap-south-1-02c95526": {
+        "339648407295-ap-south-1-ccbdbe9d": {
           "bucketName": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-          "objectKey": "727edb9c45b6d73bb773ca5a3908ccf43485830084ac10222a873927c75d7ef5.json",
+          "objectKey": "9308627564ff128566a41f8ebac6efcc5ac8f72771f3d8837cdb3f5faf3724fd.json",
           "region": "ap-south-1",
           "assumeRoleArn": "arn:${AWS::Partition}:iam::339648407295:role/cdk-hnb659fds-file-publishing-role-339648407295-ap-south-1"
         }

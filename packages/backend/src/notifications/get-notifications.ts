@@ -30,7 +30,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
   try {
     // Extract userId from authorizer context
-    const userId = event.requestContext.authorizer?.claims?.sub;
+    // The authorizer puts userId in the context, not in claims
+    const userId = event.requestContext.authorizer?.userId || event.requestContext.authorizer?.claims?.sub;
     if (!userId) {
       return {
         statusCode: 401,
@@ -112,7 +113,8 @@ export const markAsReadHandler = async (event: APIGatewayProxyEvent): Promise<AP
 
   try {
     // Extract userId from authorizer context
-    const userId = event.requestContext.authorizer?.claims?.sub;
+    // The authorizer puts userId in the context, not in claims
+    const userId = event.requestContext.authorizer?.userId || event.requestContext.authorizer?.claims?.sub;
     if (!userId) {
       return {
         statusCode: 401,

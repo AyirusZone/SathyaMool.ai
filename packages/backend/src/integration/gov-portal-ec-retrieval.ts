@@ -135,7 +135,8 @@ export const handler = async (
     const requestId = `ec-req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     // Extract user ID from authorizer context
-    const userId = event.requestContext?.authorizer?.claims?.sub;
+    // The authorizer puts userId in the context, not in claims
+    const userId = event.requestContext?.authorizer?.userId || event.requestContext?.authorizer?.claims?.sub;
 
     // Determine EC retrieval strategy (Requirement 19.3)
     const retrievalStrategy = await determineECRetrievalStrategy(request.state);

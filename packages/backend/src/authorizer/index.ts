@@ -154,7 +154,13 @@ export async function handler(
     console.log('User authenticated', { userId, email, role });
 
     // Generate allow policy with user context
-    return generatePolicy(userId, 'Allow', event.methodArn, {
+    // Use wildcard to allow all API calls after authentication
+    // Format: arn:aws:execute-api:region:account:api-id/stage/*/*
+    const arnParts = event.methodArn.split('/');
+    const apiGatewayArnPrefix = arnParts.slice(0, 2).join('/'); // arn:aws:execute-api:region:account:api-id/stage
+    const wildcardArn = `${apiGatewayArnPrefix}/*/*`;
+    
+    return generatePolicy(userId, 'Allow', wildcardArn, {
       userId,
       email: email || '',
       role,

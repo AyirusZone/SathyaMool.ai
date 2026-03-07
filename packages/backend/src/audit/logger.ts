@@ -171,9 +171,10 @@ export function extractRequestId(event: any): string | undefined {
 
 /**
  * Helper function to extract user ID from API Gateway event
+ * The authorizer puts userId in the context, not in claims
  */
 export function extractUserId(event: any): string | undefined {
-  return event.requestContext?.authorizer?.claims?.sub;
+  return event.requestContext?.authorizer?.userId || event.requestContext?.authorizer?.claims?.sub;
 }
 
 /**

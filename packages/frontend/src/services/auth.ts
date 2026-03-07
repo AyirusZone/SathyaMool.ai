@@ -40,7 +40,10 @@ class AuthService {
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     console.log('AuthService.login called with:', credentials);
     const response = await api.post<AuthResponse>('/auth/login', credentials);
-    console.log('Login API response:', response.data);
+    console.log('Login API raw response:', response);
+    console.log('Login API response.data:', response.data);
+    console.log('Response data type:', typeof response.data);
+    console.log('Response data keys:', Object.keys(response.data));
     this.setAuthData(response.data);
     console.log('After setAuthData - accessToken:', localStorage.getItem('accessToken'));
     console.log('After setAuthData - user:', localStorage.getItem('user'));
@@ -103,6 +106,17 @@ class AuthService {
 
   private setAuthData(data: AuthResponse) {
     console.log('setAuthData called with:', data);
+    
+    if (!data.accessToken || !data.refreshToken) {
+      console.error('Missing tokens in response:', data);
+      throw new Error('Invalid auth response: missing tokens');
+    }
+    
+    if (!data.userId || !data.role) {
+      console.error('Missing userId or role in response:', data);
+      throw new Error('Invalid auth response: missing user data');
+    }
+    
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
     

@@ -1086,7 +1086,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "81b7260b9b1a178e2383fadd2fb67980990a83b901e29e075ebef89be8517b76.zip"
+     "S3Key": "da6795f7125c7dec42c8e714408034d7708b2390e1b9e11eecc64ba80375f3f0.zip"
     },
     "Description": "Analysis processing Lambda function using Amazon Bedrock",
     "Environment": {
@@ -1124,7 +1124,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/AnalysisFunction/Function/Resource",
-    "aws:asset:path": "asset.81b7260b9b1a178e2383fadd2fb67980990a83b901e29e075ebef89be8517b76",
+    "aws:asset:path": "asset.da6795f7125c7dec42c8e714408034d7708b2390e1b9e11eecc64ba80375f3f0",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -1777,6 +1777,9 @@
     "SSESpecification": {
      "SSEEnabled": true
     },
+    "StreamSpecification": {
+     "StreamViewType": "NEW_AND_OLD_IMAGES"
+    },
     "TableName": "SatyaMool-Lineage"
    },
    "UpdateReplacePolicy": "Retain",
@@ -1813,6 +1816,496 @@
    "DeletionPolicy": "Retain",
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/TrustScoresTable/Resource"
+   }
+  },
+  "LineageFunctionServiceRole65F75691": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/LineageFunction/Function/ServiceRole/Resource"
+   }
+  },
+  "LineageFunctionServiceRoleDefaultPolicy447FE0E3": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:ListStreams",
+        "xray:PutTelemetryRecords",
+        "xray:PutTraceSegments"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DescribeTable",
+        "dynamodb:GetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:Query",
+        "dynamodb:Scan"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "DocumentsTable7E808EE5",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "DocumentsTable7E808EE5",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable",
+        "dynamodb:GetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:PutItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:UpdateItem"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "LineageTableED19B650",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "PropertiesTable324F3970",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "PropertiesTable324F3970",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:DescribeStream",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "DocumentsTable7E808EE5",
+         "StreamArn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "LineageFunctionServiceRoleDefaultPolicy447FE0E3",
+    "Roles": [
+     {
+      "Ref": "LineageFunctionServiceRole65F75691"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/LineageFunction/Function/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "LineageFunction47E935CF": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
+     "S3Key": "3ac985e775e8b416fc46f3d8ddb0fc9a05088e47da23319ab4a020f39012122d.zip"
+    },
+    "Description": "Lineage construction Lambda function for building ownership graphs",
+    "Environment": {
+     "Variables": {
+      "DOCUMENTS_TABLE_NAME": {
+       "Ref": "DocumentsTable7E808EE5"
+      },
+      "PROPERTIES_TABLE_NAME": {
+       "Ref": "PropertiesTable324F3970"
+      },
+      "LINEAGE_TABLE_NAME": {
+       "Ref": "LineageTableED19B650"
+      },
+      "LOG_LEVEL": "INFO",
+      "AWS_XRAY_TRACING_NAME": "SatyaMool-Lineage-Processor"
+     }
+    },
+    "FunctionName": "SatyaMool-Lineage-Processor",
+    "Handler": "handler.lambda_handler",
+    "Layers": [
+     {
+      "Ref": "LambdaLayersPythonCommonLayer321F0602"
+     }
+    ],
+    "MemorySize": 1024,
+    "Role": {
+     "Fn::GetAtt": [
+      "LineageFunctionServiceRole65F75691",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.12",
+    "Timeout": 300,
+    "TracingConfig": {
+     "Mode": "Active"
+    }
+   },
+   "DependsOn": [
+    "LineageFunctionServiceRoleDefaultPolicy447FE0E3",
+    "LineageFunctionServiceRole65F75691"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/LineageFunction/Function/Resource",
+    "aws:asset:path": "asset.3ac985e775e8b416fc46f3d8ddb0fc9a05088e47da23319ab4a020f39012122d",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "LineageFunctionDynamoDBEventSourceSatyaMoolStackDocumentsTableD51576E30C1CB0EA": {
+   "Type": "AWS::Lambda::EventSourceMapping",
+   "Properties": {
+    "BatchSize": 10,
+    "EventSourceArn": {
+     "Fn::GetAtt": [
+      "DocumentsTable7E808EE5",
+      "StreamArn"
+     ]
+    },
+    "FilterCriteria": {
+     "Filters": [
+      {
+       "Pattern": "{\"eventName\":[\"MODIFY\"],\"dynamodb\":{\"NewImage\":{\"processingStatus\":{\"S\":[\"analysis_complete\"]}}}}"
+      }
+     ]
+    },
+    "FunctionName": {
+     "Ref": "LineageFunction47E935CF"
+    },
+    "FunctionResponseTypes": [
+     "ReportBatchItemFailures"
+    ],
+    "MaximumBatchingWindowInSeconds": 5,
+    "MaximumRetryAttempts": 3,
+    "StartingPosition": "LATEST"
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/LineageFunction/Function/DynamoDBEventSource:SatyaMoolStackDocumentsTableD51576E3/Resource"
+   }
+  },
+  "TrustScoreFunctionServiceRole41B300A7": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/TrustScoreFunction/Function/ServiceRole/Resource"
+   }
+  },
+  "TrustScoreFunctionServiceRoleDefaultPolicy87513818": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:ListStreams",
+        "xray:PutTelemetryRecords",
+        "xray:PutTraceSegments"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DescribeTable",
+        "dynamodb:GetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:Query",
+        "dynamodb:Scan"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "DocumentsTable7E808EE5",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "LineageTableED19B650",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "DocumentsTable7E808EE5",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable",
+        "dynamodb:GetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:PutItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:UpdateItem"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "PropertiesTable324F3970",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "TrustScoresTableD197235C",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "PropertiesTable324F3970",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:DescribeStream",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "LineageTableED19B650",
+         "StreamArn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "TrustScoreFunctionServiceRoleDefaultPolicy87513818",
+    "Roles": [
+     {
+      "Ref": "TrustScoreFunctionServiceRole41B300A7"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/TrustScoreFunction/Function/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "TrustScoreFunction986B1C22": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
+     "S3Key": "59c441a5d507c69b9026fea992e06420d1f42b507045b4f4f9e6aea8aff50b11.zip"
+    },
+    "Description": "Trust Score calculation Lambda function",
+    "Environment": {
+     "Variables": {
+      "LINEAGE_TABLE_NAME": {
+       "Ref": "LineageTableED19B650"
+      },
+      "DOCUMENTS_TABLE_NAME": {
+       "Ref": "DocumentsTable7E808EE5"
+      },
+      "PROPERTIES_TABLE_NAME": {
+       "Ref": "PropertiesTable324F3970"
+      },
+      "TRUST_SCORES_TABLE_NAME": {
+       "Ref": "TrustScoresTableD197235C"
+      },
+      "LOG_LEVEL": "INFO",
+      "AWS_XRAY_TRACING_NAME": "SatyaMool-TrustScore-Processor"
+     }
+    },
+    "FunctionName": "SatyaMool-TrustScore-Processor",
+    "Handler": "handler.lambda_handler",
+    "Layers": [
+     {
+      "Ref": "LambdaLayersPythonCommonLayer321F0602"
+     }
+    ],
+    "MemorySize": 512,
+    "Role": {
+     "Fn::GetAtt": [
+      "TrustScoreFunctionServiceRole41B300A7",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.12",
+    "Timeout": 180,
+    "TracingConfig": {
+     "Mode": "Active"
+    }
+   },
+   "DependsOn": [
+    "TrustScoreFunctionServiceRoleDefaultPolicy87513818",
+    "TrustScoreFunctionServiceRole41B300A7"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/TrustScoreFunction/Function/Resource",
+    "aws:asset:path": "asset.59c441a5d507c69b9026fea992e06420d1f42b507045b4f4f9e6aea8aff50b11",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "TrustScoreFunctionDynamoDBEventSourceSatyaMoolStackLineageTable2A6E660AA90086F5": {
+   "Type": "AWS::Lambda::EventSourceMapping",
+   "Properties": {
+    "BatchSize": 10,
+    "EventSourceArn": {
+     "Fn::GetAtt": [
+      "LineageTableED19B650",
+      "StreamArn"
+     ]
+    },
+    "FunctionName": {
+     "Ref": "TrustScoreFunction986B1C22"
+    },
+    "FunctionResponseTypes": [
+     "ReportBatchItemFailures"
+    ],
+    "MaximumBatchingWindowInSeconds": 5,
+    "MaximumRetryAttempts": 3,
+    "StartingPosition": "LATEST"
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/TrustScoreFunction/Function/DynamoDBEventSource:SatyaMoolStackLineageTable2A6E660A/Resource"
    }
   },
   "AuditLogsTable7D096F6F": {
@@ -10850,6 +11343,74 @@
     "Name": "SatyaMool-GetNotificationsLambdaArn"
    }
   },
+  "LineageFunctionFunctionArnC7154120": {
+   "Description": "ARN of SatyaMool-Lineage-Processor",
+   "Value": {
+    "Fn::GetAtt": [
+     "LineageFunction47E935CF",
+     "Arn"
+    ]
+   }
+  },
+  "LineageFunctionOptimizationSummaryA7511311": {
+   "Description": "Optimization summary for SatyaMool-Lineage-Processor",
+   "Value": "{\"function\":\"SatyaMool-Lineage-Processor\",\"architecture\":\"ARM64\",\"layers\":1,\"provisionedConcurrency\":false,\"memorySize\":1024,\"timeout\":300}"
+  },
+  "TrustScoreFunctionFunctionArnFED0783A": {
+   "Description": "ARN of SatyaMool-TrustScore-Processor",
+   "Value": {
+    "Fn::GetAtt": [
+     "TrustScoreFunction986B1C22",
+     "Arn"
+    ]
+   }
+  },
+  "TrustScoreFunctionOptimizationSummaryDCC91E61": {
+   "Description": "Optimization summary for SatyaMool-TrustScore-Processor",
+   "Value": "{\"function\":\"SatyaMool-TrustScore-Processor\",\"architecture\":\"ARM64\",\"layers\":1,\"provisionedConcurrency\":false,\"memorySize\":512,\"timeout\":180}"
+  },
+  "LineageTableName": {
+   "Description": "DynamoDB table name for lineage",
+   "Value": {
+    "Ref": "LineageTableED19B650"
+   },
+   "Export": {
+    "Name": "SatyaMool-LineageTableName"
+   }
+  },
+  "TrustScoresTableName": {
+   "Description": "DynamoDB table name for trust scores",
+   "Value": {
+    "Ref": "TrustScoresTableD197235C"
+   },
+   "Export": {
+    "Name": "SatyaMool-TrustScoresTableName"
+   }
+  },
+  "LineageLambdaArn": {
+   "Description": "Lineage Lambda function ARN",
+   "Value": {
+    "Fn::GetAtt": [
+     "LineageFunction47E935CF",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "SatyaMool-LineageLambdaArn"
+   }
+  },
+  "TrustScoreLambdaArn": {
+   "Description": "Trust Score Lambda function ARN",
+   "Value": {
+    "Fn::GetAtt": [
+     "TrustScoreFunction986B1C22",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "SatyaMool-TrustScoreLambdaArn"
+   }
+  },
   "CleanupDeactivatedAccountsFunctionFunctionArn4EB738AC": {
    "Description": "ARN of SatyaMool-Cleanup-Deactivated-Accounts",
    "Value": {
@@ -10873,24 +11434,6 @@
    },
    "Export": {
     "Name": "SatyaMool-CleanupLambdaArn"
-   }
-  },
-  "LineageTableName": {
-   "Description": "DynamoDB table name for lineage",
-   "Value": {
-    "Ref": "LineageTableED19B650"
-   },
-   "Export": {
-    "Name": "SatyaMool-LineageTableName"
-   }
-  },
-  "TrustScoresTableName": {
-   "Description": "DynamoDB table name for trust scores",
-   "Value": {
-    "Ref": "TrustScoresTableD197235C"
-   },
-   "Export": {
-    "Name": "SatyaMool-TrustScoresTableName"
    }
   },
   "AuditLogsTableName": {

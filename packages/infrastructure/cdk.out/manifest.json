@@ -18,7 +18,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::339648407295:role/cdk-hnb659fds-deploy-role-339648407295-ap-south-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::339648407295:role/cdk-hnb659fds-cfn-exec-role-339648407295-ap-south-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-339648407295-ap-south-1/f485995b58671c4e827d6bb9cf8d2f0b2b970a222cb8f4316842c30463ecefc2.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-339648407295-ap-south-1/962e5dc19be20e6ae8e026edf2419d080b57394dfa1f1072b21cd8121a7ef1d7.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -498,6 +498,102 @@
             "data": "TrustScoresTableD197235C"
           }
         ],
+        "/SatyaMoolStack/LineageFunction/Function/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LineageFunctionServiceRole65F75691"
+          }
+        ],
+        "/SatyaMoolStack/LineageFunction/Function/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LineageFunctionServiceRoleDefaultPolicy447FE0E3"
+          }
+        ],
+        "/SatyaMoolStack/LineageFunction/Function/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LineageFunction47E935CF"
+          }
+        ],
+        "/SatyaMoolStack/LineageFunction/Function/DynamoDBEventSource:SatyaMoolStackDocumentsTableD51576E3/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LineageFunctionDynamoDBEventSourceSatyaMoolStackDocumentsTableD51576E30C1CB0EA"
+          }
+        ],
+        "/SatyaMoolStack/LineageFunction/FunctionArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LineageFunctionFunctionArnC7154120"
+          }
+        ],
+        "/SatyaMoolStack/LineageFunction/OptimizationSummary": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LineageFunctionOptimizationSummaryA7511311"
+          }
+        ],
+        "/SatyaMoolStack/TrustScoreFunction/Function/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TrustScoreFunctionServiceRole41B300A7"
+          }
+        ],
+        "/SatyaMoolStack/TrustScoreFunction/Function/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TrustScoreFunctionServiceRoleDefaultPolicy87513818"
+          }
+        ],
+        "/SatyaMoolStack/TrustScoreFunction/Function/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TrustScoreFunction986B1C22"
+          }
+        ],
+        "/SatyaMoolStack/TrustScoreFunction/Function/DynamoDBEventSource:SatyaMoolStackLineageTable2A6E660A/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TrustScoreFunctionDynamoDBEventSourceSatyaMoolStackLineageTable2A6E660AA90086F5"
+          }
+        ],
+        "/SatyaMoolStack/TrustScoreFunction/FunctionArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TrustScoreFunctionFunctionArnFED0783A"
+          }
+        ],
+        "/SatyaMoolStack/TrustScoreFunction/OptimizationSummary": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TrustScoreFunctionOptimizationSummaryDCC91E61"
+          }
+        ],
+        "/SatyaMoolStack/LineageTableName": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LineageTableName"
+          }
+        ],
+        "/SatyaMoolStack/TrustScoresTableName": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TrustScoresTableName"
+          }
+        ],
+        "/SatyaMoolStack/LineageLambdaArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LineageLambdaArn"
+          }
+        ],
+        "/SatyaMoolStack/TrustScoreLambdaArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TrustScoreLambdaArn"
+          }
+        ],
         "/SatyaMoolStack/AuditLogsTable": [
           {
             "type": "aws:cdk:hasPhysicalName",
@@ -572,18 +668,6 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "CleanupLambdaArn"
-          }
-        ],
-        "/SatyaMoolStack/LineageTableName": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "LineageTableName"
-          }
-        ],
-        "/SatyaMoolStack/TrustScoresTableName": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "TrustScoresTableName"
           }
         ],
         "/SatyaMoolStack/AuditLogsTableName": [

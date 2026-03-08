@@ -88,7 +88,7 @@ export const handler = async (
     }
 
     // Extract propertyId from path parameters
-    const propertyId = event.pathParameters?.id;
+    const propertyId = event.pathParameters?.propertyId;
     
     if (!propertyId) {
       return createErrorResponse(400, 'MISSING_PROPERTY_ID', 'Property ID is required');

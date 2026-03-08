@@ -18,7 +18,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::339648407295:role/cdk-hnb659fds-deploy-role-339648407295-ap-south-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::339648407295:role/cdk-hnb659fds-cfn-exec-role-339648407295-ap-south-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-339648407295-ap-south-1/f6d600470ee6e0ac43b52a2870e0e3aa91834b08d049644567c3a4d9f7b5cb14.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-339648407295-ap-south-1/cd34e9f3b13d1fbbe8e53f3851cf587e3091cd7302d66f140deb9132f2900e7c.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -1177,7 +1177,7 @@
         "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Deployment/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "MainApiGatewaySatyaMoolMainApiDeploymentCB4C84D7fe7d24d259568f3c2dc9995f54b4107e"
+            "data": "MainApiGatewaySatyaMoolMainApiDeploymentCB4C84D754158a1d2a78743ad50611fa50dcfa5a"
           }
         ],
         "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/DeploymentStage.v1/Resource": [
@@ -1516,76 +1516,64 @@
             "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIdreportPOST151E4944"
           }
         ],
-        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/Resource": [
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/upload-url/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "MainApiGatewaySatyaMoolMainApidocuments06284949"
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIduploadurlD87F6EC3"
           }
         ],
-        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/OPTIONS/Resource": [
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/upload-url/OPTIONS/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "MainApiGatewaySatyaMoolMainApidocumentsOPTIONS7A898550"
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIduploadurlOPTIONS25E085C5"
           }
         ],
-        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/upload-url/Resource": [
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/upload-url/POST/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..properties.{propertyId}.upload-url": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "MainApiGatewaySatyaMoolMainApidocumentsuploadurl93B8AF84"
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIduploadurlPOSTApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTpropertiespropertyIduploadurlEF6B9DC3"
           }
         ],
-        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/upload-url/OPTIONS/Resource": [
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/upload-url/POST/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..properties.{propertyId}.upload-url": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "MainApiGatewaySatyaMoolMainApidocumentsuploadurlOPTIONSF1F0B279"
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIduploadurlPOSTApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTpropertiespropertyIduploadurl7B84F5E8"
           }
         ],
-        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/upload-url/POST/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..documents.upload-url": [
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/upload-url/POST/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "MainApiGatewaySatyaMoolMainApidocumentsuploadurlPOSTApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTdocumentsuploadurl4A60A03B"
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIduploadurlPOST56EE3AA4"
           }
         ],
-        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/upload-url/POST/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..documents.upload-url": [
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/documents/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "MainApiGatewaySatyaMoolMainApidocumentsuploadurlPOSTApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTdocumentsuploadurlED1A2229"
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIddocumentsCEDFE9BE"
           }
         ],
-        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/upload-url/POST/Resource": [
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/documents/OPTIONS/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "MainApiGatewaySatyaMoolMainApidocumentsuploadurlPOSTCAC8D979"
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIddocumentsOPTIONSA083490E"
           }
         ],
-        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/register/Resource": [
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/documents/POST/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..properties.{propertyId}.documents": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "MainApiGatewaySatyaMoolMainApidocumentsregister4C881168"
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIddocumentsPOSTApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTpropertiespropertyIddocuments85C2FFD0"
           }
         ],
-        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/register/OPTIONS/Resource": [
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/documents/POST/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..properties.{propertyId}.documents": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "MainApiGatewaySatyaMoolMainApidocumentsregisterOPTIONS620BC820"
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIddocumentsPOSTApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTpropertiespropertyIddocuments29437F4B"
           }
         ],
-        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/register/POST/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..documents.register": [
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/documents/POST/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "MainApiGatewaySatyaMoolMainApidocumentsregisterPOSTApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTdocumentsregisterED7AA722"
-          }
-        ],
-        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/register/POST/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.POST..documents.register": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "MainApiGatewaySatyaMoolMainApidocumentsregisterPOSTApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33POSTdocumentsregisterB69E4BE6"
-          }
-        ],
-        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/documents/register/POST/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "MainApiGatewaySatyaMoolMainApidocumentsregisterPOST66A8E099"
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIddocumentsPOSTB4DAC9DE"
           }
         ],
         "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/notifications/Resource": [

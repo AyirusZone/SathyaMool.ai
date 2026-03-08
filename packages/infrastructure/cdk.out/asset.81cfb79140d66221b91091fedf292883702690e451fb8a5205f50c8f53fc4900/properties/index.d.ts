@@ -1,0 +1,9 @@
+export { handler as createProperty } from './create-property';
+export { handler as listProperties } from './list-properties';
+export { handler as getProperty } from './get-property';
+export { handler as deleteProperty } from './delete-property';
+export { handler as generateUploadUrl } from './generate-upload-url';
+export { handler as registerDocument } from './register-document';
+export { handler as getLineage } from './get-lineage';
+export { handler as getTrustScore } from './get-trust-score';
+export { handler as generateReport } from './generate-report';

@@ -62,24 +62,21 @@ export const handler = async (
       return createErrorResponse(400, 'MISSING_PROPERTY_ID', 'Property ID is required');
     }
 
-    // Query property using propertyId and userId as composite key
-    // First, we need to get the property to check ownership
-    const queryCommand = new QueryCommand({
+    // Get property using propertyId (partition key)
+    const getCommand = new GetCommand({
       TableName: PROPERTIES_TABLE_NAME,
-      KeyConditionExpression: 'propertyId = :propertyId',
-      ExpressionAttributeValues: {
-        ':propertyId': propertyId,
+      Key: {
+        propertyId: propertyId,
       },
-      Limit: 1,
     });
 
-    const result = await docClient.send(queryCommand);
+    const result = await docClient.send(getCommand);
 
-    if (!result.Items || result.Items.length === 0) {
+    if (!result.Item) {
       return createErrorResponse(404, 'PROPERTY_NOT_FOUND', 'Property not found');
     }
 
-    const property = result.Items[0] as PropertyDetails;
+    const property = result.Item as PropertyDetails;
 
     // Authorization check: user owns property or is admin
     const isOwner = property.userId === userId;

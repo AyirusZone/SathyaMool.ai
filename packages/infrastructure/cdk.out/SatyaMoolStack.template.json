@@ -888,7 +888,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "85283c6f68d8252d99f31eae37d7f5fd0eaacaa6c307ea1d3bc23f347a84a989.zip"
+     "S3Key": "bed89b8c67389d1f176cbadc1e88a5333531c17f3a26448f414a78256ba8629d.zip"
     },
     "Description": "Translation processing Lambda function using Amazon Translate",
     "Environment": {
@@ -926,7 +926,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/TranslationFunction/Function/Resource",
-    "aws:asset:path": "asset.85283c6f68d8252d99f31eae37d7f5fd0eaacaa6c307ea1d3bc23f347a84a989",
+    "aws:asset:path": "asset.bed89b8c67389d1f176cbadc1e88a5333531c17f3a26448f414a78256ba8629d",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }

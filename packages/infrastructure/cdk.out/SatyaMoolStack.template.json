@@ -573,6 +573,7 @@
       {
        "Action": [
         "textract:AnalyzeDocument",
+        "textract:DetectDocumentText",
         "textract:GetDocumentAnalysis",
         "textract:StartDocumentAnalysis",
         "xray:PutTelemetryRecords",
@@ -694,7 +695,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "c925bbc723c2487dbf9545b8467164c5b5cc0a02217631c2af4ba0bd35053fd8.zip"
+     "S3Key": "82595c0cd38c0f2bbfddbc5774ca77d5dd9d890549b9fbf976987fadd1fabefc.zip"
     },
     "Description": "OCR processing Lambda function using Amazon Textract",
     "Environment": {
@@ -735,7 +736,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/OcrFunction/Function/Resource",
-    "aws:asset:path": "asset.c925bbc723c2487dbf9545b8467164c5b5cc0a02217631c2af4ba0bd35053fd8",
+    "aws:asset:path": "asset.82595c0cd38c0f2bbfddbc5774ca77d5dd9d890549b9fbf976987fadd1fabefc",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }

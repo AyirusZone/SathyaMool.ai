@@ -21,7 +21,7 @@ import {
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
-import propertyService, { Property, LineageGraph, TrustScore } from '../services/property';
+import propertyService, { Property, LineageGraph as LineageGraphType, TrustScore } from '../services/property';
 import ProcessingStatus from '../components/ProcessingStatus';
 import DocumentUpload from '../components/DocumentUpload';
 import DocumentList from '../components/DocumentList';
@@ -32,7 +32,7 @@ const PropertyDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [property, setProperty] = useState<Property | null>(null);
-  const [lineage, setLineage] = useState<LineageGraph | null>(null);
+  const [lineage, setLineage] = useState<LineageGraphType | null>(null);
   const [trustScore, setTrustScore] = useState<TrustScore | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -43,15 +43,17 @@ const PropertyDetails: React.FC = () => {
   useEffect(() => {
     if (id) {
       loadProperty();
+      
+      // Auto-refresh when property has documents but is not completed
       const interval = setInterval(() => {
-        if (property?.status === 'processing') {
+        if (property && property.documentCount > 0 && property.status !== 'completed' && property.status !== 'failed') {
           loadProperty();
         }
-      }, 10000); // Refresh every 10 seconds for processing properties
+      }, 10000); // Refresh every 10 seconds
 
       return () => clearInterval(interval);
     }
-  }, [id, property?.status]);
+  }, [id, property?.status, property?.documentCount]);
 
   const loadProperty = async () => {
     if (!id) return;
@@ -183,6 +185,7 @@ const PropertyDetails: React.FC = () => {
               status={property.status}
               documentCount={property.documentCount}
               processedCount={property.documentCount}
+              processingStatus={property.processingStatus}
             />
           </Grid>
 

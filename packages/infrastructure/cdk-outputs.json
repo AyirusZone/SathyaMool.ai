@@ -37,7 +37,7 @@
     "OcrLambdaArn": "arn:aws:lambda:ap-south-1:339648407295:function:SatyaMool-OCR-Processor",
     "OcrFunctionFunctionArn5D824ECC": "arn:aws:lambda:ap-south-1:339648407295:function:SatyaMool-OCR-Processor",
     "AuditLogsTableName": "SatyaMool-AuditLogs",
-    "LambdaLayersPythonCommonLayerArnF311EE92": "arn:aws:lambda:ap-south-1:339648407295:layer:satyamool-python-common:7",
+    "LambdaLayersPythonCommonLayerArnF311EE92": "arn:aws:lambda:ap-south-1:339648407295:layer:satyamool-python-common:8",
     "NotificationLambdaArn": "arn:aws:lambda:ap-south-1:339648407295:function:SatyaMool-Notification-Processor",
     "LambdaLayersAwsSdkLayerArnE8BFEC60": "arn:aws:lambda:ap-south-1:339648407295:layer:satyamool-aws-sdk:7",
     "FrontendBucketName": "satyamool-frontend-339648407295",

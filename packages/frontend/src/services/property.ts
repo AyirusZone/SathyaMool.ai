@@ -12,6 +12,13 @@ export interface Property {
   updatedAt: string;
   clientName?: string; // For Professional Users
   clientId?: string; // For Professional Users
+  processingStatus?: {
+    ocr: number;
+    translation: number;
+    analysis: number;
+    lineage: boolean;
+    scoring: boolean;
+  };
 }
 
 export interface Document {
@@ -22,6 +29,8 @@ export interface Document {
   uploadedAt: string;
   processingStatus: string;
   ocrConfidence?: number;
+  fileName: string;
+  fileSize: number;
 }
 
 export interface LineageNode {

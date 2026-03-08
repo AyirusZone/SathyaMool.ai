@@ -37,7 +37,7 @@
     ],
     "Content": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "6c7e1d027f0d35e4efb484986f53ebb3ee48fc70a4030a74faaf20166e5a3079.zip"
+     "S3Key": "a4f09fabdd757ea9091544f940b7e73dd1945f668e6963e0e63a1cecf5e68384.zip"
     },
     "Description": "Common Python dependencies for SatyaMool Lambda functions",
     "LayerName": "satyamool-python-common"
@@ -46,7 +46,7 @@
    "DeletionPolicy": "Retain",
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/LambdaLayers/PythonCommonLayer/Resource",
-    "aws:asset:path": "asset.6c7e1d027f0d35e4efb484986f53ebb3ee48fc70a4030a74faaf20166e5a3079",
+    "aws:asset:path": "asset.a4f09fabdd757ea9091544f940b7e73dd1945f668e6963e0e63a1cecf5e68384",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Content"
    }
@@ -695,7 +695,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "82595c0cd38c0f2bbfddbc5774ca77d5dd9d890549b9fbf976987fadd1fabefc.zip"
+     "S3Key": "abe6263eb6228f7c82a7edffea27347a594860fd3dc95608e8a9e17606c817b0.zip"
     },
     "Description": "OCR processing Lambda function using Amazon Textract",
     "Environment": {
@@ -736,7 +736,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/OcrFunction/Function/Resource",
-    "aws:asset:path": "asset.82595c0cd38c0f2bbfddbc5774ca77d5dd9d890549b9fbf976987fadd1fabefc",
+    "aws:asset:path": "asset.abe6263eb6228f7c82a7edffea27347a594860fd3dc95608e8a9e17606c817b0",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }

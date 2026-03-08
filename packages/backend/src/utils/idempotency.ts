@@ -291,17 +291,13 @@ export async function conditionalPut(
   params: PutCommandInput
 ): Promise<boolean> {
   try {
-    // Add condition to prevent overwriting existing items
-    const enhancedParams = {
-      ...params,
-      ConditionExpression: params.ConditionExpression || 'attribute_not_exists(#pk)',
-      ExpressionAttributeNames: {
-        ...params.ExpressionAttributeNames,
-        '#pk': Object.keys(params.Item || {})[0], // First attribute is usually the partition key
-      },
-    };
+    // If no condition expression provided, add default one
+    if (!params.ConditionExpression) {
+      const partitionKey = Object.keys(params.Item || {})[0];
+      params.ConditionExpression = `attribute_not_exists(${partitionKey})`;
+    }
 
-    const putCommand = new PutCommand(enhancedParams);
+    const putCommand = new PutCommand(params);
     await docClient.send(putCommand);
     return true;
   } catch (error: any) {

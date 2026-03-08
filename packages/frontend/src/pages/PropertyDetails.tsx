@@ -24,6 +24,7 @@ import {
 import propertyService, { Property, LineageGraph, TrustScore } from '../services/property';
 import ProcessingStatus from '../components/ProcessingStatus';
 import DocumentUpload from '../components/DocumentUpload';
+import DocumentList from '../components/DocumentList';
 import LineageGraph from '../components/LineageGraph';
 import TrustScoreBreakdown from '../components/TrustScoreBreakdown';
 
@@ -189,6 +190,7 @@ const PropertyDetails: React.FC = () => {
             <Paper>
               <Tabs value={tab} onChange={(_, v) => setTab(v)}>
                 <Tab label="Upload Documents" />
+                <Tab label="Documents" />
                 {property.status === 'completed' && <Tab label="Lineage Graph" />}
                 {property.status === 'completed' && <Tab label="Trust Score" />}
               </Tabs>
@@ -201,11 +203,15 @@ const PropertyDetails: React.FC = () => {
                   />
                 )}
 
-                {tab === 1 && lineage && (
+                {tab === 1 && (
+                  <DocumentList propertyId={property.propertyId} />
+                )}
+
+                {tab === 2 && lineage && (
                   <LineageGraph nodes={lineage.nodes} edges={lineage.edges} />
                 )}
 
-                {tab === 2 && trustScore && (
+                {tab === 3 && trustScore && (
                   <TrustScoreBreakdown trustScore={trustScore} />
                 )}
               </Box>

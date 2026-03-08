@@ -152,6 +152,51 @@
     "aws:cdk:path": "SatyaMoolStack/DocumentProcessingQueue/Resource"
    }
   },
+  "DocumentProcessingQueuePolicyFB14258E": {
+   "Type": "AWS::SQS::QueuePolicy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "sqs:GetQueueAttributes",
+        "sqs:GetQueueUrl",
+        "sqs:SendMessage"
+       ],
+       "Condition": {
+        "ArnLike": {
+         "aws:SourceArn": {
+          "Fn::GetAtt": [
+           "DocumentBucketAE41E5A9",
+           "Arn"
+          ]
+         }
+        }
+       },
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "s3.amazonaws.com"
+       },
+       "Resource": {
+        "Fn::GetAtt": [
+         "DocumentProcessingQueueB731B00D",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Queues": [
+     {
+      "Ref": "DocumentProcessingQueueB731B00D"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/DocumentProcessingQueue/Policy/Resource"
+   }
+  },
   "DocumentBucketAE41E5A9": {
    "Type": "AWS::S3::Bucket",
    "Properties": {
@@ -205,6 +250,142 @@
    "DeletionPolicy": "Delete",
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/DocumentBucket/Resource"
+   }
+  },
+  "DocumentBucketNotifications734C97DF": {
+   "Type": "Custom::S3BucketNotifications",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "BucketNotificationsHandler050a0587b7544547bf325f094a3db8347ECC3691",
+      "Arn"
+     ]
+    },
+    "BucketName": {
+     "Ref": "DocumentBucketAE41E5A9"
+    },
+    "NotificationConfiguration": {
+     "QueueConfigurations": [
+      {
+       "Events": [
+        "s3:ObjectCreated:*"
+       ],
+       "Filter": {
+        "Key": {
+         "FilterRules": [
+          {
+           "Name": "prefix",
+           "Value": "properties/"
+          }
+         ]
+        }
+       },
+       "QueueArn": {
+        "Fn::GetAtt": [
+         "DocumentProcessingQueueB731B00D",
+         "Arn"
+        ]
+       }
+      }
+     ]
+    },
+    "Managed": true,
+    "SkipDestinationValidation": false
+   },
+   "DependsOn": [
+    "DocumentProcessingQueuePolicyFB14258E",
+    "DocumentProcessingQueueB731B00D"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/DocumentBucket/Notifications/Resource"
+   }
+  },
+  "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Role/Resource"
+   }
+  },
+  "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleDefaultPolicy2CF63D36": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "s3:PutBucketNotification",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "DocumentBucketAE41E5A9",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleDefaultPolicy2CF63D36",
+    "Roles": [
+     {
+      "Ref": "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Role/DefaultPolicy/Resource"
+   }
+  },
+  "BucketNotificationsHandler050a0587b7544547bf325f094a3db8347ECC3691": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Description": "AWS CloudFormation handler for \"Custom::S3BucketNotifications\" resources (@aws-cdk/aws-s3)",
+    "Code": {
+     "ZipFile": "import boto3  # type: ignore\nimport json\nimport logging\nimport urllib.request\n\ns3 = boto3.client(\"s3\")\n\nEVENTBRIDGE_CONFIGURATION = 'EventBridgeConfiguration'\nCONFIGURATION_TYPES = [\"TopicConfigurations\", \"QueueConfigurations\", \"LambdaFunctionConfigurations\"]\n\ndef handler(event: dict, context):\n  response_status = \"SUCCESS\"\n  error_message = \"\"\n  try:\n    props = event[\"ResourceProperties\"]\n    notification_configuration = props[\"NotificationConfiguration\"]\n    managed = props.get('Managed', 'true').lower() == 'true'\n    skipDestinationValidation = props.get('SkipDestinationValidation', 'false').lower() == 'true'\n    stack_id = event['StackId']\n    old = event.get(\"OldResourceProperties\", {}).get(\"NotificationConfiguration\", {})\n    if managed:\n      config = handle_managed(event[\"RequestType\"], notification_configuration)\n    else:\n      config = handle_unmanaged(props[\"BucketName\"], stack_id, event[\"RequestType\"], notification_configuration, old)\n    s3.put_bucket_notification_configuration(Bucket=props[\"BucketName\"], NotificationConfiguration=config, SkipDestinationValidation=skipDestinationValidation)\n  except Exception as e:\n    logging.exception(\"Failed to put bucket notification configuration\")\n    response_status = \"FAILED\"\n    error_message = f\"Error: {str(e)}. \"\n  finally:\n    submit_response(event, context, response_status, error_message)\n\ndef handle_managed(request_type, notification_configuration):\n  if request_type == 'Delete':\n    return {}\n  return notification_configuration\n\ndef handle_unmanaged(bucket, stack_id, request_type, notification_configuration, old):\n  def get_id(n):\n    n['Id'] = ''\n    sorted_notifications = sort_filter_rules(n)\n    strToHash=json.dumps(sorted_notifications, sort_keys=True).replace('\"Name\": \"prefix\"', '\"Name\": \"Prefix\"').replace('\"Name\": \"suffix\"', '\"Name\": \"Suffix\"')\n    return f\"{stack_id}-{hash(strToHash)}\"\n  def with_id(n):\n    n['Id'] = get_id(n)\n    return n\n\n  external_notifications = {}\n  existing_notifications = s3.get_bucket_notification_configuration(Bucket=bucket)\n  for t in CONFIGURATION_TYPES:\n    if request_type == 'Update':\n        old_incoming_ids = [get_id(n) for n in old.get(t, [])]\n        external_notifications[t] = [n for n in existing_notifications.get(t, []) if not get_id(n) in old_incoming_ids]      \n    elif request_type == 'Delete':\n        external_notifications[t] = [n for n in existing_notifications.get(t, []) if not n['Id'].startswith(f\"{stack_id}-\")]\n    elif request_type == 'Create':\n        external_notifications[t] = [n for n in existing_notifications.get(t, [])]\n  if EVENTBRIDGE_CONFIGURATION in existing_notifications:\n    external_notifications[EVENTBRIDGE_CONFIGURATION] = existing_notifications[EVENTBRIDGE_CONFIGURATION]\n\n  if request_type == 'Delete':\n    return external_notifications\n\n  notifications = {}\n  for t in CONFIGURATION_TYPES:\n    external = external_notifications.get(t, [])\n    incoming = [with_id(n) for n in notification_configuration.get(t, [])]\n    notifications[t] = external + incoming\n\n  if EVENTBRIDGE_CONFIGURATION in notification_configuration:\n    notifications[EVENTBRIDGE_CONFIGURATION] = notification_configuration[EVENTBRIDGE_CONFIGURATION]\n  elif EVENTBRIDGE_CONFIGURATION in external_notifications:\n    notifications[EVENTBRIDGE_CONFIGURATION] = external_notifications[EVENTBRIDGE_CONFIGURATION]\n\n  return notifications\n\ndef submit_response(event: dict, context, response_status: str, error_message: str):\n  response_body = json.dumps(\n    {\n      \"Status\": response_status,\n      \"Reason\": f\"{error_message}See the details in CloudWatch Log Stream: {context.log_stream_name}\",\n      \"PhysicalResourceId\": event.get(\"PhysicalResourceId\") or event[\"LogicalResourceId\"],\n      \"StackId\": event[\"StackId\"],\n      \"RequestId\": event[\"RequestId\"],\n      \"LogicalResourceId\": event[\"LogicalResourceId\"],\n      \"NoEcho\": False,\n    }\n  ).encode(\"utf-8\")\n  headers = {\"content-type\": \"\", \"content-length\": str(len(response_body))}\n  try:\n    req = urllib.request.Request(url=event[\"ResponseURL\"], headers=headers, data=response_body, method=\"PUT\")\n    with urllib.request.urlopen(req) as response:\n      print(response.read().decode(\"utf-8\"))\n    print(\"Status code: \" + response.reason)\n  except Exception as e:\n      print(\"send(..) failed executing request.urlopen(..): \" + str(e))\n\ndef sort_filter_rules(json_obj):\n  if not isinstance(json_obj, dict):\n      return json_obj\n  for key, value in json_obj.items():\n      if isinstance(value, dict):\n          json_obj[key] = sort_filter_rules(value)\n      elif isinstance(value, list):\n          json_obj[key] = [sort_filter_rules(item) for item in value]\n  if \"Filter\" in json_obj and \"Key\" in json_obj[\"Filter\"] and \"FilterRules\" in json_obj[\"Filter\"][\"Key\"]:\n      filter_rules = json_obj[\"Filter\"][\"Key\"][\"FilterRules\"]\n      sorted_filter_rules = sorted(filter_rules, key=lambda x: x[\"Name\"])\n      json_obj[\"Filter\"][\"Key\"][\"FilterRules\"] = sorted_filter_rules\n  return json_obj"
+    },
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.13",
+    "Timeout": 300
+   },
+   "DependsOn": [
+    "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleDefaultPolicy2CF63D36",
+    "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Resource"
    }
   },
   "AuditLogBucketCB3C9E27": {
@@ -924,7 +1105,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6.zip"
+     "S3Key": "0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932.zip"
     },
     "Description": "Notification Lambda function for email and in-app notifications",
     "Environment": {
@@ -973,7 +1154,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/NotificationFunction/Function/Resource",
-    "aws:asset:path": "asset.2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6",
+    "aws:asset:path": "asset.0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -1130,7 +1311,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6.zip"
+     "S3Key": "0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932.zip"
     },
     "Description": "Lambda function for retrieving user notifications via API",
     "Environment": {
@@ -1171,7 +1352,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/GetNotificationsFunction/Function/Resource",
-    "aws:asset:path": "asset.2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6",
+    "aws:asset:path": "asset.0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -1562,7 +1743,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6.zip"
+     "S3Key": "0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932.zip"
     },
     "Description": "Scheduled Lambda for cleaning up deactivated accounts after 30 days",
     "Environment": {
@@ -1625,7 +1806,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/CleanupDeactivatedAccountsFunction/Function/Resource",
-    "aws:asset:path": "asset.2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6",
+    "aws:asset:path": "asset.0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -2022,7 +2203,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6.zip"
+     "S3Key": "0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932.zip"
     },
     "Description": "Handle user registration with email/phone",
     "Environment": {
@@ -2067,7 +2248,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/AuthLambdas/RegisterFunction/Resource",
-    "aws:asset:path": "asset.2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6",
+    "aws:asset:path": "asset.0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -2243,7 +2424,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6.zip"
+     "S3Key": "0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932.zip"
     },
     "Description": "Handle user login and issue JWT tokens",
     "Environment": {
@@ -2288,7 +2469,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/AuthLambdas/LoginFunction/Resource",
-    "aws:asset:path": "asset.2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6",
+    "aws:asset:path": "asset.0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -2464,7 +2645,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6.zip"
+     "S3Key": "0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932.zip"
     },
     "Description": "Verify phone OTP and complete registration",
     "Environment": {
@@ -2509,7 +2690,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/AuthLambdas/VerifyOtpFunction/Resource",
-    "aws:asset:path": "asset.2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6",
+    "aws:asset:path": "asset.0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -2685,7 +2866,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6.zip"
+     "S3Key": "0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932.zip"
     },
     "Description": "Refresh JWT access tokens",
     "Environment": {
@@ -2730,7 +2911,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/AuthLambdas/RefreshTokenFunction/Resource",
-    "aws:asset:path": "asset.2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6",
+    "aws:asset:path": "asset.0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -2870,7 +3051,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6.zip"
+     "S3Key": "0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932.zip"
     },
     "Description": "Validate JWT tokens and enforce RBAC",
     "Environment": {
@@ -2915,7 +3096,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/AuthLambdas/AuthorizerFunction/Resource",
-    "aws:asset:path": "asset.2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6",
+    "aws:asset:path": "asset.0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -4487,7 +4668,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6.zip"
+     "S3Key": "0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932.zip"
     },
     "Environment": {
      "Variables": {
@@ -4543,7 +4724,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/PropertyLambdas/CreatePropertyFunction/Resource",
-    "aws:asset:path": "asset.2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6",
+    "aws:asset:path": "asset.0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -4803,7 +4984,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6.zip"
+     "S3Key": "0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932.zip"
     },
     "Environment": {
      "Variables": {
@@ -4859,7 +5040,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/PropertyLambdas/ListPropertiesFunction/Resource",
-    "aws:asset:path": "asset.2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6",
+    "aws:asset:path": "asset.0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -5119,7 +5300,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6.zip"
+     "S3Key": "0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932.zip"
     },
     "Environment": {
      "Variables": {
@@ -5175,7 +5356,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/PropertyLambdas/GetPropertyFunction/Resource",
-    "aws:asset:path": "asset.2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6",
+    "aws:asset:path": "asset.0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -5435,7 +5616,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6.zip"
+     "S3Key": "0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932.zip"
     },
     "Environment": {
      "Variables": {
@@ -5491,7 +5672,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/PropertyLambdas/DeletePropertyFunction/Resource",
-    "aws:asset:path": "asset.2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6",
+    "aws:asset:path": "asset.0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -5751,7 +5932,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6.zip"
+     "S3Key": "0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932.zip"
     },
     "Environment": {
      "Variables": {
@@ -5807,7 +5988,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/PropertyLambdas/GenerateUploadUrlFunction/Resource",
-    "aws:asset:path": "asset.2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6",
+    "aws:asset:path": "asset.0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -6067,7 +6248,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6.zip"
+     "S3Key": "0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932.zip"
     },
     "Environment": {
      "Variables": {
@@ -6123,7 +6304,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/PropertyLambdas/RegisterDocumentFunction/Resource",
-    "aws:asset:path": "asset.2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6",
+    "aws:asset:path": "asset.0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -6152,6 +6333,322 @@
    },
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/PropertyLambdas/RegisterDocumentFunction/LogRetention/Resource"
+   }
+  },
+  "PropertyLambdasGetDocumentsFunctionServiceRole49B3A571": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/PropertyLambdas/GetDocumentsFunction/ServiceRole/Resource"
+   }
+  },
+  "PropertyLambdasGetDocumentsFunctionServiceRoleDefaultPolicy4BE85330": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "xray:PutTelemetryRecords",
+        "xray:PutTraceSegments"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable",
+        "dynamodb:GetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:PutItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:UpdateItem"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "DocumentsTable7E808EE5",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "IdempotencyTable22A5A209",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "LineageTableED19B650",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "PropertiesTable324F3970",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "TrustScoresTableD197235C",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "DocumentsTable7E808EE5",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "PropertiesTable324F3970",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchWriteItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "AuditLogsTable7D096F6F",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "AuditLogsTable7D096F6F",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "s3:Abort*",
+        "s3:DeleteObject*",
+        "s3:GetBucket*",
+        "s3:GetObject*",
+        "s3:List*",
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "DocumentBucketAE41E5A9",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "DocumentBucketAE41E5A9",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "sqs:GetQueueAttributes",
+        "sqs:GetQueueUrl",
+        "sqs:SendMessage"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "DocumentProcessingQueueB731B00D",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "PropertyLambdasGetDocumentsFunctionServiceRoleDefaultPolicy4BE85330",
+    "Roles": [
+     {
+      "Ref": "PropertyLambdasGetDocumentsFunctionServiceRole49B3A571"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/PropertyLambdas/GetDocumentsFunction/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "PropertyLambdasGetDocumentsFunction3F247DF7": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
+     "S3Key": "0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "PROPERTIES_TABLE_NAME": {
+       "Ref": "PropertiesTable324F3970"
+      },
+      "DOCUMENTS_TABLE_NAME": {
+       "Ref": "DocumentsTable7E808EE5"
+      },
+      "LINEAGE_TABLE_NAME": {
+       "Ref": "LineageTableED19B650"
+      },
+      "TRUST_SCORES_TABLE_NAME": {
+       "Ref": "TrustScoresTableD197235C"
+      },
+      "AUDIT_LOGS_TABLE_NAME": {
+       "Ref": "AuditLogsTable7D096F6F"
+      },
+      "IDEMPOTENCY_TABLE_NAME": {
+       "Ref": "IdempotencyTable22A5A209"
+      },
+      "DOCUMENT_BUCKET_NAME": {
+       "Ref": "DocumentBucketAE41E5A9"
+      },
+      "PROCESSING_QUEUE_URL": {
+       "Ref": "DocumentProcessingQueueB731B00D"
+      }
+     }
+    },
+    "FunctionName": "SatyaMool-GetDocuments",
+    "Handler": "properties/get-documents.handler",
+    "Layers": [
+     {
+      "Ref": "LambdaLayersNodejsCommonLayer122327BB"
+     }
+    ],
+    "MemorySize": 512,
+    "Role": {
+     "Fn::GetAtt": [
+      "PropertyLambdasGetDocumentsFunctionServiceRole49B3A571",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 30,
+    "TracingConfig": {
+     "Mode": "Active"
+    }
+   },
+   "DependsOn": [
+    "PropertyLambdasGetDocumentsFunctionServiceRoleDefaultPolicy4BE85330",
+    "PropertyLambdasGetDocumentsFunctionServiceRole49B3A571"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/PropertyLambdas/GetDocumentsFunction/Resource",
+    "aws:asset:path": "asset.0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "PropertyLambdasGetDocumentsFunctionLogRetention252060B2": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "PropertyLambdasGetDocumentsFunction3F247DF7"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 7
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/PropertyLambdas/GetDocumentsFunction/LogRetention/Resource"
    }
   },
   "PropertyLambdasGetLineageFunctionServiceRole3BD46C07": {
@@ -6383,7 +6880,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6.zip"
+     "S3Key": "0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932.zip"
     },
     "Environment": {
      "Variables": {
@@ -6439,7 +6936,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/PropertyLambdas/GetLineageFunction/Resource",
-    "aws:asset:path": "asset.2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6",
+    "aws:asset:path": "asset.0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -6699,7 +7196,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6.zip"
+     "S3Key": "0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932.zip"
     },
     "Environment": {
      "Variables": {
@@ -6755,7 +7252,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/PropertyLambdas/GetTrustScoreFunction/Resource",
-    "aws:asset:path": "asset.2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6",
+    "aws:asset:path": "asset.0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -7015,7 +7512,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
-     "S3Key": "2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6.zip"
+     "S3Key": "0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932.zip"
     },
     "Environment": {
      "Variables": {
@@ -7071,7 +7568,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/PropertyLambdas/GenerateReportFunction/Resource",
-    "aws:asset:path": "asset.2e69da1d3de06bcdbe36d6191be100fb9f5ad817fb316090cdf3b7cfbe1b69c6",
+    "aws:asset:path": "asset.0366ae4a18c4e73737c915511d68a12068e657781427f0d749118506f69e4932",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -7179,7 +7676,7 @@
     "aws:cdk:path": "SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Account"
    }
   },
-  "MainApiGatewaySatyaMoolMainApiDeploymentCB4C84D754158a1d2a78743ad50611fa50dcfa5a": {
+  "MainApiGatewaySatyaMoolMainApiDeploymentCB4C84D7aa0e74009a0a762b0d40e0fe29da4fd8": {
    "Type": "AWS::ApiGateway::Deployment",
    "Properties": {
     "Description": "SatyaMool Property Management API",
@@ -7208,6 +7705,7 @@
     "MainApiGatewaySatyaMoolMainApinotificationsB517D73A",
     "MainApiGatewaySatyaMoolMainApiOPTIONSA945E8A1",
     "MainApiGatewaySatyaMoolMainApipropertiespropertyIdDELETECD78D844",
+    "MainApiGatewaySatyaMoolMainApipropertiespropertyIddocumentsGET5992E81B",
     "MainApiGatewaySatyaMoolMainApipropertiespropertyIddocumentsOPTIONSA083490E",
     "MainApiGatewaySatyaMoolMainApipropertiespropertyIddocumentsPOSTB4DAC9DE",
     "MainApiGatewaySatyaMoolMainApipropertiespropertyIddocumentsCEDFE9BE",
@@ -7249,7 +7747,7 @@
      "Format": "{\"requestId\":\"$context.requestId\",\"ip\":\"$context.identity.sourceIp\",\"user\":\"$context.identity.user\",\"caller\":\"$context.identity.caller\",\"requestTime\":\"$context.requestTime\",\"httpMethod\":\"$context.httpMethod\",\"resourcePath\":\"$context.resourcePath\",\"status\":\"$context.status\",\"protocol\":\"$context.protocol\",\"responseLength\":\"$context.responseLength\"}"
     },
     "DeploymentId": {
-     "Ref": "MainApiGatewaySatyaMoolMainApiDeploymentCB4C84D754158a1d2a78743ad50611fa50dcfa5a"
+     "Ref": "MainApiGatewaySatyaMoolMainApiDeploymentCB4C84D7aa0e74009a0a762b0d40e0fe29da4fd8"
     },
     "MethodSettings": [
      {
@@ -9335,6 +9833,104 @@
     "aws:cdk:path": "SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/documents/POST/Resource"
    }
   },
+  "MainApiGatewaySatyaMoolMainApipropertiespropertyIddocumentsGETApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33GETpropertiespropertyIddocuments770417C6": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "PropertyLambdasGetDocumentsFunction3F247DF7",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:ap-south-1:339648407295:",
+       {
+        "Ref": "MainApiGatewaySatyaMoolMainApiC8F7825B"
+       },
+       "/",
+       {
+        "Ref": "MainApiGatewaySatyaMoolMainApiDeploymentStagev17310331D"
+       },
+       "/GET/properties/*/documents"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/documents/GET/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.GET..properties.{propertyId}.documents"
+   }
+  },
+  "MainApiGatewaySatyaMoolMainApipropertiespropertyIddocumentsGETApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33GETpropertiespropertyIddocumentsB8303830": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "PropertyLambdasGetDocumentsFunction3F247DF7",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:ap-south-1:339648407295:",
+       {
+        "Ref": "MainApiGatewaySatyaMoolMainApiC8F7825B"
+       },
+       "/test-invoke-stage/GET/properties/*/documents"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/documents/GET/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.GET..properties.{propertyId}.documents"
+   }
+  },
+  "MainApiGatewaySatyaMoolMainApipropertiespropertyIddocumentsGET5992E81B": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "CUSTOM",
+    "AuthorizerId": {
+     "Ref": "MainApiGatewayJwtAuthorizerB6E88B49"
+    },
+    "HttpMethod": "GET",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:aws:apigateway:ap-south-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "PropertyLambdasGetDocumentsFunction3F247DF7",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "MainApiGatewaySatyaMoolMainApipropertiespropertyIddocumentsCEDFE9BE"
+    },
+    "RestApiId": {
+     "Ref": "MainApiGatewaySatyaMoolMainApiC8F7825B"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/documents/GET/Resource"
+   }
+  },
   "MainApiGatewaySatyaMoolMainApinotificationsB517D73A": {
    "Type": "AWS::ApiGateway::Resource",
    "Properties": {
@@ -9612,7 +10208,7 @@
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
-    "Analytics": "v2:deflate64:H4sIAAAAAAAA/22STXMbIQyGf0vumKZOpvdN2uZQe+qunVwzMqtuyLKIrCAel+G/d4DN5/ikR+8rQAiWcnn5VZ6fwYEXqhsWRu9l3HpQg4AD30cD474DGVdwxOkOJ9ZkxfVf+yH/Gazys/HKP57R+i2FSeEanNO2z/ZpdYPTqDnvlQRf3AMzepZNDoIvZLwKakB/BYyiYl5UKYlhZBl/4TFrOTRGA+ekQBL8xDL+CRgwiwWS6I4WRur2Mu5gb4pTIAkNo4wtVa3EDRmtyvaVksB8C5axDXNZyCsV9VZ7kvGWcdoQmWy98gtcG43Wv7eqkoShnmVcUd+iR1uGuKL+ZqLgyshnTgKc7sHjAY4ytsi+cbp08YaNUhSsF9/RGTqO84Hvsq2HvrReoUUub1JGvEb/QF02Z3px50Mqr6nDcsMKN7WhFtmR5VL6WWqcnp9ppluGHjcGbJ3GqSSXtfgUkP0dGN2Bp6m28Unb0YC2Cf6BJv0PS81blgRblnFHTqvy1BlSEuWH5QnM//B38C74k/dNwlKH8pG/PC8v5Td5fvbIWi+mYL0eUbY1/gd7koTuTwMAAA=="
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/22STVPbMBCGfwt3RaWB6d3QlkOTaeoErsxG3hphWWu8EhlXo//ekeQkwHDxPvvuWtoPLeXy+qu8vIADL1TTLYzey7B1oDoBB34MBvp9AzKsYMLxAUfWZMXtX/vO/+mtcnPgxD9e0bot+VHhGoZB2zaFP1c3OPaa01lR8NUjMKNjWSUj+EqGG686dDfAKAqmnwpF0fUswy+ckpZMZTRwcjJEwS8swx+PHpNYIH83ZLSaTmJxo9DQy1CTyenZnhOPOc1koadmL8MO9iUzQxSYGmQZaj8f4JOqqLXakQz3jOOGyKTQiY9wazRa9zZUlCgMtSzDitoaHdo83xW1dyP5IW9j5ihg0C04PMAkQ43sqkHnKs5YKUXeOvEdB0NTP1/4xts6aHPpBWrkvK48/TW6J2pScKZjdL6k8JoazB0WuCsF1cgDWc6pH6Vq0PMGZ7pnaHFjwJZpfOaktBpfPLJ7AKMbcDSWMj5oO+rQVt490aj/Yc45e1GwZRl2NGiV15ggRpEfX5rA/ER/ezd4967NI0RhqUH5zF9el9fym7y8eGatF6O3Tvco62L/A+ZviplqAwAA"
    },
    "Metadata": {
     "aws:cdk:path": "SatyaMoolStack/CDKMetadata/Default"

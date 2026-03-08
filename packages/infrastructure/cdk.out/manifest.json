@@ -18,7 +18,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::339648407295:role/cdk-hnb659fds-deploy-role-339648407295-ap-south-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::339648407295:role/cdk-hnb659fds-cfn-exec-role-339648407295-ap-south-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-339648407295-ap-south-1/41673c7d8677f8d031a6583b6cea7dc14eda82e373bf020c768d555f533b9a4b.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-339648407295-ap-south-1/3f07d015802da16e328b85998078cbbbf256f936c1b4bc3c297905011a3b6f80.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -94,10 +94,40 @@
             "data": "DocumentProcessingQueueB731B00D"
           }
         ],
+        "/SatyaMoolStack/DocumentProcessingQueue/Policy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DocumentProcessingQueuePolicyFB14258E"
+          }
+        ],
         "/SatyaMoolStack/DocumentBucket/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "DocumentBucketAE41E5A9"
+          }
+        ],
+        "/SatyaMoolStack/DocumentBucket/Notifications/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DocumentBucketNotifications734C97DF"
+          }
+        ],
+        "/SatyaMoolStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Role/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC"
+          }
+        ],
+        "/SatyaMoolStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Role/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleDefaultPolicy2CF63D36"
+          }
+        ],
+        "/SatyaMoolStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BucketNotificationsHandler050a0587b7544547bf325f094a3db8347ECC3691"
           }
         ],
         "/SatyaMoolStack/AuditLogBucket/Resource": [
@@ -1078,6 +1108,30 @@
             "data": "PropertyLambdasRegisterDocumentFunctionLogRetentionE77DBB90"
           }
         ],
+        "/SatyaMoolStack/PropertyLambdas/GetDocumentsFunction/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGetDocumentsFunctionServiceRole49B3A571"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GetDocumentsFunction/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGetDocumentsFunctionServiceRoleDefaultPolicy4BE85330"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GetDocumentsFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGetDocumentsFunction3F247DF7"
+          }
+        ],
+        "/SatyaMoolStack/PropertyLambdas/GetDocumentsFunction/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PropertyLambdasGetDocumentsFunctionLogRetention252060B2"
+          }
+        ],
         "/SatyaMoolStack/PropertyLambdas/GetLineageFunction/ServiceRole/Resource": [
           {
             "type": "aws:cdk:logicalId",
@@ -1177,7 +1231,7 @@
         "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Deployment/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "MainApiGatewaySatyaMoolMainApiDeploymentCB4C84D754158a1d2a78743ad50611fa50dcfa5a"
+            "data": "MainApiGatewaySatyaMoolMainApiDeploymentCB4C84D7aa0e74009a0a762b0d40e0fe29da4fd8"
           }
         ],
         "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/DeploymentStage.v1/Resource": [
@@ -1574,6 +1628,24 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIddocumentsPOSTB4DAC9DE"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/documents/GET/ApiPermission.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.GET..properties.{propertyId}.documents": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIddocumentsGETApiPermissionSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33GETpropertiespropertyIddocuments770417C6"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/documents/GET/ApiPermission.Test.SatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33.GET..properties.{propertyId}.documents": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIddocumentsGETApiPermissionTestSatyaMoolStackMainApiGatewaySatyaMoolMainApiBD223B33GETpropertiespropertyIddocumentsB8303830"
+          }
+        ],
+        "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/properties/{propertyId}/documents/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MainApiGatewaySatyaMoolMainApipropertiespropertyIddocumentsGET5992E81B"
           }
         ],
         "/SatyaMoolStack/MainApiGateway/SatyaMoolMainApi/Default/notifications/Resource": [

@@ -172,6 +172,11 @@ class PropertyService {
     return response.data;
   }
 
+  async getDocuments(propertyId: string): Promise<Document[]> {
+    const response = await api.get<{ documents: Document[]; count: number }>(`/properties/${propertyId}/documents`);
+    return response.data.documents;
+  }
+
   async uploadDocument(uploadUrl: string, file: File): Promise<void> {
     await fetch(uploadUrl, {
       method: 'PUT',

@@ -119,11 +119,12 @@ export const handler = async (
     const s3Key = `properties/${propertyId}/documents/${documentId}.${fileExtension}`;
 
     // Create S3 PutObject command
+    // Note: ContentLength is NOT included here because it's a forbidden header in browsers
+    // The browser will automatically set Content-Length when uploading
     const putObjectCommand = new PutObjectCommand({
       Bucket: DOCUMENT_BUCKET_NAME,
       Key: s3Key,
       ContentType: body.contentType,
-      ContentLength: body.fileSize,
       Metadata: {
         propertyId: propertyId,
         userId: userId,

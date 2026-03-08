@@ -105,6 +105,34 @@ export interface CreateAuditLogParams {
 }
 
 /**
+ * Recursively remove undefined values from an object
+ */
+function removeUndefinedValues(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(removeUndefinedValues).filter(item => item !== undefined);
+  }
+
+  if (typeof obj === 'object') {
+    const cleaned: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        const cleanedValue = removeUndefinedValues(value);
+        if (cleanedValue !== undefined) {
+          cleaned[key] = cleanedValue;
+        }
+      }
+    }
+    return cleaned;
+  }
+
+  return obj;
+}
+
+/**
  * Create an audit log entry in DynamoDB
  * 
  * @param params - Audit log parameters
@@ -125,10 +153,8 @@ export async function createAuditLog(params: CreateAuditLogParams): Promise<Audi
     metadata: params.metadata,
   };
 
-  // Remove undefined values to avoid DynamoDB errors
-  const cleanedEntry = Object.fromEntries(
-    Object.entries(logEntry).filter(([_, value]) => value !== undefined)
-  ) as AuditLogEntry;
+  // Remove undefined values recursively to avoid DynamoDB errors
+  const cleanedEntry = removeUndefinedValues(logEntry) as AuditLogEntry;
 
   try {
     await docClient.send(

@@ -763,6 +763,403 @@
     "aws:cdk:path": "SatyaMoolStack/OcrFunction/Function/SqsEventSource:SatyaMoolStackDocumentProcessingQueueADC6574A/Resource"
    }
   },
+  "TranslationFunctionServiceRole1578FAD7": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/TranslationFunction/Function/ServiceRole/Resource"
+   }
+  },
+  "TranslationFunctionServiceRoleDefaultPolicy398907AF": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "comprehend:DetectDominantLanguage",
+        "dynamodb:ListStreams",
+        "translate:TranslateText",
+        "xray:PutTelemetryRecords",
+        "xray:PutTraceSegments"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable",
+        "dynamodb:GetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:PutItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:UpdateItem"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "DocumentsTable7E808EE5",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "DocumentsTable7E808EE5",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:DescribeStream",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "DocumentsTable7E808EE5",
+         "StreamArn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "TranslationFunctionServiceRoleDefaultPolicy398907AF",
+    "Roles": [
+     {
+      "Ref": "TranslationFunctionServiceRole1578FAD7"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/TranslationFunction/Function/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "TranslationFunction30829AD2": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
+     "S3Key": "85283c6f68d8252d99f31eae37d7f5fd0eaacaa6c307ea1d3bc23f347a84a989.zip"
+    },
+    "Description": "Translation processing Lambda function using Amazon Translate",
+    "Environment": {
+     "Variables": {
+      "DOCUMENTS_TABLE_NAME": {
+       "Ref": "DocumentsTable7E808EE5"
+      },
+      "LOG_LEVEL": "INFO",
+      "AWS_XRAY_TRACING_NAME": "SatyaMool-Translation-Processor"
+     }
+    },
+    "FunctionName": "SatyaMool-Translation-Processor",
+    "Handler": "handler.lambda_handler",
+    "Layers": [
+     {
+      "Ref": "LambdaLayersPythonCommonLayer321F0602"
+     }
+    ],
+    "MemorySize": 512,
+    "Role": {
+     "Fn::GetAtt": [
+      "TranslationFunctionServiceRole1578FAD7",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.12",
+    "Timeout": 300,
+    "TracingConfig": {
+     "Mode": "Active"
+    }
+   },
+   "DependsOn": [
+    "TranslationFunctionServiceRoleDefaultPolicy398907AF",
+    "TranslationFunctionServiceRole1578FAD7"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/TranslationFunction/Function/Resource",
+    "aws:asset:path": "asset.85283c6f68d8252d99f31eae37d7f5fd0eaacaa6c307ea1d3bc23f347a84a989",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "TranslationFunctionDynamoDBEventSourceSatyaMoolStackDocumentsTableD51576E388538121": {
+   "Type": "AWS::Lambda::EventSourceMapping",
+   "Properties": {
+    "BatchSize": 10,
+    "EventSourceArn": {
+     "Fn::GetAtt": [
+      "DocumentsTable7E808EE5",
+      "StreamArn"
+     ]
+    },
+    "FilterCriteria": {
+     "Filters": [
+      {
+       "Pattern": "{\"eventName\":[\"MODIFY\"],\"dynamodb\":{\"NewImage\":{\"processingStatus\":{\"S\":[\"ocr_complete\"]}}}}"
+      }
+     ]
+    },
+    "FunctionName": {
+     "Ref": "TranslationFunction30829AD2"
+    },
+    "FunctionResponseTypes": [
+     "ReportBatchItemFailures"
+    ],
+    "MaximumBatchingWindowInSeconds": 5,
+    "MaximumRetryAttempts": 3,
+    "StartingPosition": "LATEST"
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/TranslationFunction/Function/DynamoDBEventSource:SatyaMoolStackDocumentsTableD51576E3/Resource"
+   }
+  },
+  "AnalysisFunctionServiceRole2A15D7FA": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/AnalysisFunction/Function/ServiceRole/Resource"
+   }
+  },
+  "AnalysisFunctionServiceRoleDefaultPolicy8DBBA6A3": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "bedrock:InvokeModel",
+        "dynamodb:ListStreams",
+        "xray:PutTelemetryRecords",
+        "xray:PutTraceSegments"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable",
+        "dynamodb:GetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:PutItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:UpdateItem"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "DocumentsTable7E808EE5",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "DocumentsTable7E808EE5",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:DescribeStream",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "DocumentsTable7E808EE5",
+         "StreamArn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "AnalysisFunctionServiceRoleDefaultPolicy8DBBA6A3",
+    "Roles": [
+     {
+      "Ref": "AnalysisFunctionServiceRole2A15D7FA"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/AnalysisFunction/Function/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "AnalysisFunction88926021": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-339648407295-ap-south-1",
+     "S3Key": "81b7260b9b1a178e2383fadd2fb67980990a83b901e29e075ebef89be8517b76.zip"
+    },
+    "Description": "Analysis processing Lambda function using Amazon Bedrock",
+    "Environment": {
+     "Variables": {
+      "DOCUMENTS_TABLE_NAME": {
+       "Ref": "DocumentsTable7E808EE5"
+      },
+      "LOG_LEVEL": "INFO",
+      "AWS_XRAY_TRACING_NAME": "SatyaMool-Analysis-Processor"
+     }
+    },
+    "FunctionName": "SatyaMool-Analysis-Processor",
+    "Handler": "handler.lambda_handler",
+    "Layers": [
+     {
+      "Ref": "LambdaLayersPythonCommonLayer321F0602"
+     }
+    ],
+    "MemorySize": 1024,
+    "Role": {
+     "Fn::GetAtt": [
+      "AnalysisFunctionServiceRole2A15D7FA",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.12",
+    "Timeout": 300,
+    "TracingConfig": {
+     "Mode": "Active"
+    }
+   },
+   "DependsOn": [
+    "AnalysisFunctionServiceRoleDefaultPolicy8DBBA6A3",
+    "AnalysisFunctionServiceRole2A15D7FA"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/AnalysisFunction/Function/Resource",
+    "aws:asset:path": "asset.81b7260b9b1a178e2383fadd2fb67980990a83b901e29e075ebef89be8517b76",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "AnalysisFunctionDynamoDBEventSourceSatyaMoolStackDocumentsTableD51576E33C05CCDE": {
+   "Type": "AWS::Lambda::EventSourceMapping",
+   "Properties": {
+    "BatchSize": 10,
+    "EventSourceArn": {
+     "Fn::GetAtt": [
+      "DocumentsTable7E808EE5",
+      "StreamArn"
+     ]
+    },
+    "FilterCriteria": {
+     "Filters": [
+      {
+       "Pattern": "{\"eventName\":[\"MODIFY\"],\"dynamodb\":{\"NewImage\":{\"processingStatus\":{\"S\":[\"translation_complete\"]}}}}"
+      }
+     ]
+    },
+    "FunctionName": {
+     "Ref": "AnalysisFunction88926021"
+    },
+    "FunctionResponseTypes": [
+     "ReportBatchItemFailures"
+    ],
+    "MaximumBatchingWindowInSeconds": 5,
+    "MaximumRetryAttempts": 3,
+    "StartingPosition": "LATEST"
+   },
+   "Metadata": {
+    "aws:cdk:path": "SatyaMoolStack/AnalysisFunction/Function/DynamoDBEventSource:SatyaMoolStackDocumentsTableD51576E3/Resource"
+   }
+  },
   "UsersTable9725E9C8": {
    "Type": "AWS::DynamoDB::Table",
    "Properties": {
@@ -10257,6 +10654,32 @@
    "Description": "Optimization summary for SatyaMool-OCR-Processor",
    "Value": "{\"function\":\"SatyaMool-OCR-Processor\",\"architecture\":\"ARM64\",\"layers\":1,\"provisionedConcurrency\":false,\"memorySize\":512,\"timeout\":300}"
   },
+  "TranslationFunctionFunctionArn42A0EBA8": {
+   "Description": "ARN of SatyaMool-Translation-Processor",
+   "Value": {
+    "Fn::GetAtt": [
+     "TranslationFunction30829AD2",
+     "Arn"
+    ]
+   }
+  },
+  "TranslationFunctionOptimizationSummary18C210E9": {
+   "Description": "Optimization summary for SatyaMool-Translation-Processor",
+   "Value": "{\"function\":\"SatyaMool-Translation-Processor\",\"architecture\":\"ARM64\",\"layers\":1,\"provisionedConcurrency\":false,\"memorySize\":512,\"timeout\":300}"
+  },
+  "AnalysisFunctionFunctionArnDE7FB76F": {
+   "Description": "ARN of SatyaMool-Analysis-Processor",
+   "Value": {
+    "Fn::GetAtt": [
+     "AnalysisFunction88926021",
+     "Arn"
+    ]
+   }
+  },
+  "AnalysisFunctionOptimizationSummaryE9566A19": {
+   "Description": "Optimization summary for SatyaMool-Analysis-Processor",
+   "Value": "{\"function\":\"SatyaMool-Analysis-Processor\",\"architecture\":\"ARM64\",\"layers\":1,\"provisionedConcurrency\":false,\"memorySize\":1024,\"timeout\":300}"
+  },
   "DocumentBucketName": {
    "Description": "S3 bucket name for document storage",
    "Value": {
@@ -10324,6 +10747,30 @@
    },
    "Export": {
     "Name": "SatyaMool-OcrLambdaArn"
+   }
+  },
+  "TranslationLambdaArn": {
+   "Description": "Translation Lambda function ARN",
+   "Value": {
+    "Fn::GetAtt": [
+     "TranslationFunction30829AD2",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "SatyaMool-TranslationLambdaArn"
+   }
+  },
+  "AnalysisLambdaArn": {
+   "Description": "Analysis Lambda function ARN",
+   "Value": {
+    "Fn::GetAtt": [
+     "AnalysisFunction88926021",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "SatyaMool-AnalysisLambdaArn"
    }
   },
   "NotificationFunctionFunctionArn84544E76": {

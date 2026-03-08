@@ -41,6 +41,7 @@ interface GenerateUploadUrlRequest {
 interface GenerateUploadUrlResponse {
   uploadUrl: string;
   documentId: string;
+  s3Key: string;
   expiresIn: number;
   metadata: {
     fileName: string;
@@ -146,6 +147,7 @@ export const handler = async (
     const response: GenerateUploadUrlResponse = {
       uploadUrl: uploadUrl,
       documentId: documentId,
+      s3Key: s3Key,
       expiresIn: PRESIGNED_URL_EXPIRATION,
       metadata: {
         fileName: body.fileName,

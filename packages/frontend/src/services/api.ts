@@ -1,7 +1,8 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/v1';
-const AUTH_API_BASE_URL = import.meta.env.VITE_AUTH_API_BASE_URL || API_BASE_URL;
+// Auth endpoints are on the same API Gateway now
+const AUTH_API_BASE_URL = API_BASE_URL;
 
 class ApiClient {
   private client: AxiosInstance;
@@ -51,15 +52,19 @@ class ApiClient {
           originalRequest._retry = true;
 
           try {
+            console.log('Token expired, attempting refresh...');
             const refreshToken = localStorage.getItem('refreshToken');
             if (!refreshToken) {
+              console.error('No refresh token available');
               throw new Error('No refresh token');
             }
 
+            console.log('Calling refresh token endpoint...');
             const response = await this.authClient.post('/auth/refresh', {
               refreshToken,
             });
 
+            console.log('Token refresh successful');
             const { accessToken } = response.data;
             localStorage.setItem('accessToken', accessToken);
             
@@ -72,9 +77,12 @@ class ApiClient {
               localStorage.setItem('user', JSON.stringify(user));
             }
 
+            // Retry the original request with new token
             originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+            console.log('Retrying original request with new token');
             return this.client(originalRequest);
           } catch (refreshError) {
+            console.error('Token refresh failed:', refreshError);
             // Refresh failed, clear tokens and redirect to login
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');

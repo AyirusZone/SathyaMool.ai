@@ -152,18 +152,22 @@ class PropertyService {
     await api.delete(`/properties/${propertyId}`);
   }
 
-  async getUploadUrl(propertyId: string, fileName: string, fileType: string): Promise<UploadUrlResponse> {
+  async getUploadUrl(propertyId: string, fileName: string, fileType: string, fileSize: number): Promise<UploadUrlResponse> {
     const response = await api.post<UploadUrlResponse>(`/properties/${propertyId}/upload-url`, {
       fileName,
-      fileType,
+      contentType: fileType,
+      fileSize,
     });
     return response.data;
   }
 
-  async registerDocument(propertyId: string, documentId: string, s3Key: string): Promise<Document> {
+  async registerDocument(propertyId: string, documentId: string, s3Key: string, fileName: string, fileSize: number, contentType: string): Promise<Document> {
     const response = await api.post<Document>(`/properties/${propertyId}/documents`, {
       documentId,
       s3Key,
+      fileName,
+      fileSize,
+      contentType,
     });
     return response.data;
   }
@@ -221,10 +225,11 @@ class PropertyService {
         const { uploadUrl, documentId, s3Key } = await this.getUploadUrl(
           propertyId,
           file.name,
-          file.type
+          file.type,
+          file.size
         );
         await this.uploadDocument(uploadUrl, file);
-        await this.registerDocument(propertyId, documentId, s3Key);
+        await this.registerDocument(propertyId, documentId, s3Key, file.name, file.size, file.type);
         uploaded++;
       } catch (error) {
         console.error(`Failed to upload ${file.name}:`, error);

@@ -123,7 +123,8 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onUploadCom
       const { uploadUrl, documentId, s3Key } = await propertyService.getUploadUrl(
         propertyId,
         fileStatus.file.name,
-        fileStatus.file.type
+        fileStatus.file.type,
+        fileStatus.file.size
       );
 
       await propertyService.uploadDocument(uploadUrl, fileStatus.file);
@@ -132,7 +133,14 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ propertyId, onUploadCom
         prev.map((f, i) => (i === index ? { ...f, progress: 50 } : f))
       );
 
-      await propertyService.registerDocument(propertyId, documentId, s3Key);
+      await propertyService.registerDocument(
+        propertyId, 
+        documentId, 
+        s3Key,
+        fileStatus.file.name,
+        fileStatus.file.size,
+        fileStatus.file.type
+      );
 
       setFiles((prev) =>
         prev.map((f, i) => (i === index ? { ...f, status: 'success', progress: 100 } : f))

@@ -1,0 +1,7 @@
+# Common Python dependencies for SatyaMool Lambda functions
+boto3==1.34.0
+botocore==1.34.0
+python-dateutil==2.8.2
+
+# PDF processing for OCR fallback
+PyMuPDF>=1.24.11

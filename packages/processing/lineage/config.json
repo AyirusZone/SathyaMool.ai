@@ -1,0 +1,26 @@
+{
+  "function_name": "SatyaMool-Lineage",
+  "runtime": "python3.12",
+  "handler": "handler.lambda_handler",
+  "memory_size": 512,
+  "timeout": 60,
+  "architecture": "arm64",
+  "environment_variables": {
+    "DOCUMENTS_TABLE_NAME": "SatyaMool-Documents",
+    "PROPERTIES_TABLE_NAME": "SatyaMool-Properties",
+    "LINEAGE_TABLE_NAME": "SatyaMool-Lineage"
+  },
+  "trigger": {
+    "type": "dynamodb_stream",
+    "table": "SatyaMool-Documents",
+    "batch_size": 10,
+    "starting_position": "LATEST",
+    "filter_criteria": {
+      "filters": [
+        {
+          "pattern": "{\"dynamodb\": {\"NewImage\": {\"processingStatus\": {\"S\": [\"analysis_complete\"]}}}}"
+        }
+      ]
+    }
+  }
+}

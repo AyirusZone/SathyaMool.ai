@@ -1,0 +1,29 @@
+{
+  "function_name": "SatyaMool-Analysis",
+  "runtime": "python3.12",
+  "handler": "handler.lambda_handler",
+  "memory_size": 1024,
+  "timeout": 180,
+  "architecture": "arm64",
+  "environment_variables": {
+    "DOCUMENTS_TABLE_NAME": "SatyaMool-Documents"
+  },
+  "trigger": {
+    "type": "dynamodb_stream",
+    "table": "SatyaMool-Documents",
+    "batch_size": 10,
+    "starting_position": "LATEST",
+    "filter_criteria": {
+      "filters": [
+        {
+          "pattern": "{\"dynamodb\": {\"NewImage\": {\"processingStatus\": {\"S\": [\"translation_complete\"]}}}}"
+        }
+      ]
+    }
+  },
+  "bedrock_model": {
+    "model_id": "anthropic.claude-3-5-sonnet-20241022-v2:0",
+    "temperature": 0.0,
+    "max_tokens": 4096
+  }
+}

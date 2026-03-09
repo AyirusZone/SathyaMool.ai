@@ -1,0 +1,169 @@
+import React, { useState } from 'react';
+import { useNavigate, Link as RouterLink, useLocation } from 'react-router-dom';
+import {
+  Container,
+  Box,
+  Card,
+  CardContent,
+  TextField,
+  Button,
+  Typography,
+  Alert,
+  Tabs,
+  Tab,
+  CircularProgress,
+} from '@mui/material';
+import authService from '../services/auth';
+
+const Login: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [tab, setTab] = useState(0);
+  const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState(
+    (location.state as any)?.message || ''
+  );
+
+  // Clear any expired tokens on mount
+  React.useEffect(() => {
+    // Clear localStorage to start fresh
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+  }, []);
+
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (authService.isAuthenticated()) {
+      console.log('Already authenticated, redirecting to dashboard');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const credentials = tab === 0
+        ? { email, password }
+        : { phoneNumber, password };
+
+      console.log('Login attempt with credentials:', credentials);
+      const response = await authService.login(credentials);
+      console.log('Login response:', response);
+      console.log('isAuthenticated after login:', authService.isAuthenticated());
+      console.log('localStorage accessToken:', localStorage.getItem('accessToken'));
+      console.log('localStorage user:', localStorage.getItem('user'));
+      
+      // Use navigate with replace to avoid back button issues
+      navigate('/dashboard', { replace: true });
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(err.response?.data?.message || 'Login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Container maxWidth="sm">
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Card sx={{ width: '100%' }}>
+          <CardContent sx={{ p: 4 }}>
+            <Typography variant="h4" align="center" gutterBottom>
+              SatyaMool
+            </Typography>
+            <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: 3 }}>
+              Property Verification Platform
+            </Typography>
+
+            <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
+              <Tab label="Email" />
+              <Tab label="Phone" />
+            </Tabs>
+
+            {successMessage && (
+              <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccessMessage('')}>
+                {successMessage}
+              </Alert>
+            )}
+
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+
+            <form onSubmit={handleSubmit}>
+              {tab === 0 ? (
+                <TextField
+                  fullWidth
+                  label="Email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  sx={{ mb: 2 }}
+                />
+              ) : (
+                <TextField
+                  fullWidth
+                  label="Phone Number"
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  required
+                  placeholder="+91XXXXXXXXXX"
+                  sx={{ mb: 2 }}
+                />
+              )}
+
+              <TextField
+                fullWidth
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                sx={{ mb: 3 }}
+              />
+
+              <Button
+                fullWidth
+                type="submit"
+                variant="contained"
+                size="large"
+                disabled={loading}
+                sx={{ mb: 2 }}
+              >
+                {loading ? <CircularProgress size={24} /> : 'Login'}
+              </Button>
+
+              <Typography variant="body2" align="center">
+                Don't have an account?{' '}
+                <RouterLink to="/register" style={{ textDecoration: 'none', color: '#1976d2' }}>
+                  Register
+                </RouterLink>
+              </Typography>
+            </form>
+          </CardContent>
+        </Card>
+      </Box>
+    </Container>
+  );
+};
+
+export default Login;

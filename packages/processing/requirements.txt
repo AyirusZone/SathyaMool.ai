@@ -1,0 +1,5 @@
+boto3==1.34.20
+botocore==1.34.20
+
+# AWS SDK for Python
+# boto3 provides access to S3, Textract, DynamoDB, and SQS services

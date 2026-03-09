@@ -1,0 +1,39 @@
+{
+  "function_name": "SatyaMool-Translation",
+  "description": "Translates OCR text from regional Indian languages to English",
+  "runtime": "python3.12",
+  "handler": "handler.lambda_handler",
+  "timeout": 120,
+  "memory_size": 512,
+  "environment_variables": {
+    "DOCUMENTS_TABLE_NAME": "SatyaMool-Documents"
+  },
+  "trigger": {
+    "type": "dynamodb_stream",
+    "source": "Documents",
+    "batch_size": 10,
+    "starting_position": "LATEST",
+    "bisect_batch_on_error": true,
+    "retry_attempts": 3
+  },
+  "supported_languages": {
+    "hi": "Hindi",
+    "ta": "Tamil",
+    "kn": "Kannada",
+    "mr": "Marathi",
+    "te": "Telugu"
+  },
+  "target_language": "en",
+  "translation_settings": {
+    "formality": "FORMAL",
+    "profanity": "MASK",
+    "max_chunk_size": 9000
+  },
+  "requirements": [
+    "5.1",
+    "5.2",
+    "5.3",
+    "5.6",
+    "5.7"
+  ]
+}

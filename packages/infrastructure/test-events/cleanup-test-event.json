@@ -1,0 +1,13 @@
+{
+  "version": "0",
+  "id": "test-event-id-12345",
+  "detail-type": "Scheduled Event",
+  "source": "aws.events",
+  "account": "339648407295",
+  "time": "2026-03-06T02:00:00Z",
+  "region": "ap-south-1",
+  "resources": [
+    "arn:aws:events:ap-south-1:339648407295:rule/SatyaMool-Daily-Account-Cleanup"
+  ],
+  "detail": {}
+}

@@ -1,30 +1,57 @@
-# SathyaMool.ai
+# SatyaMool
 
-SathyaMool.ai helps people and organizations bring clarity, trust, and permanence to important records and assets.
+AWS-native serverless platform for automated legal verification of Indian property documents using Generative AI.
 
-What we do
-- We turn paper records and informal documents into reliable, easy-to-understand digital records.
-- We make it simple for families, small businesses, and community groups to prove ownership, track changes, and reduce disputes.
+## Project Structure
 
-Who it's for
-- Homeowners and landholders who want clear, lasting proof of their property or rights.
-- Small businesses and traders who need trustworthy records without complicated processes.
-- Community organizations and local governments seeking to organize and preserve important documents.
+```
+satyamool/
+├── packages/
+│   ├── infrastructure/    # AWS CDK infrastructure code
+│   ├── backend/          # Node.js Lambda functions for APIs
+│   ├── processing/       # Python Lambda functions for AI processing
+│   └── frontend/         # React 18 frontend application
+└── package.json          # Root package.json for monorepo
+```
 
-Why it matters (plain terms)
-- Reduces confusion: clear records mean fewer arguments and faster decisions.
-- Builds trust: verified records help people and institutions rely on facts.
-- Saves time: replaces slow paper processes with simple digital steps.
+## Prerequisites
 
-How to get started
-1. Visit our website or contact our team to tell us what you need.
-2. Share the documents or details you already have (we help with digitization).
-3. We help verify and organize your records, then deliver an easy-to-use digital summary.
+- Node.js 20+
+- Python 3.12+
+- AWS CLI configured
+- AWS CDK CLI installed (`npm install -g aws-cdk`)
 
-Privacy & safety
-We treat personal and property information respectfully. We use careful methods to protect data and only share details with permission.
+## Getting Started
 
-Contact
-If you'd like to learn more or discuss a specific case, please open an issue or get in touch through the project contact channels.
+1. Install dependencies:
+```bash
+npm install
+```
 
-Thank you for checking out SathyaMool.ai — helping communities keep the roots of what matters clear and secure.
+2. Build all packages:
+```bash
+npm run build
+```
+
+3. Deploy infrastructure:
+```bash
+npm run deploy
+```
+
+## Architecture
+
+SatyaMool uses a fully serverless architecture:
+- **API Layer**: AWS API Gateway + Lambda (Node.js 20)
+- **Processing**: Lambda (Python 3.12) + SQS + DynamoDB Streams
+- **AI Services**: Amazon Textract, Translate, Bedrock (Claude 3.5 Sonnet)
+- **Storage**: S3 with KMS encryption
+- **Database**: DynamoDB with on-demand pricing
+- **Authentication**: AWS Cognito
+
+## Development
+
+See individual package READMEs for development instructions:
+- [Infrastructure](./packages/infrastructure/README.md)
+- [Backend](./packages/backend/README.md)
+- [Processing](./packages/processing/README.md)
+- [Frontend](./packages/frontend/README.md)

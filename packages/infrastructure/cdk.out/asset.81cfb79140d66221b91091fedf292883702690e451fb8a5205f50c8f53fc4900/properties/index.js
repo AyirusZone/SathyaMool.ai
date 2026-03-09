@@ -1,0 +1,22 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.generateReport = exports.getTrustScore = exports.getLineage = exports.registerDocument = exports.generateUploadUrl = exports.deleteProperty = exports.getProperty = exports.listProperties = exports.createProperty = void 0;
+var create_property_1 = require("./create-property");
+Object.defineProperty(exports, "createProperty", { enumerable: true, get: function () { return create_property_1.handler; } });
+var list_properties_1 = require("./list-properties");
+Object.defineProperty(exports, "listProperties", { enumerable: true, get: function () { return list_properties_1.handler; } });
+var get_property_1 = require("./get-property");
+Object.defineProperty(exports, "getProperty", { enumerable: true, get: function () { return get_property_1.handler; } });
+var delete_property_1 = require("./delete-property");
+Object.defineProperty(exports, "deleteProperty", { enumerable: true, get: function () { return delete_property_1.handler; } });
+var generate_upload_url_1 = require("./generate-upload-url");
+Object.defineProperty(exports, "generateUploadUrl", { enumerable: true, get: function () { return generate_upload_url_1.handler; } });
+var register_document_1 = require("./register-document");
+Object.defineProperty(exports, "registerDocument", { enumerable: true, get: function () { return register_document_1.handler; } });
+var get_lineage_1 = require("./get-lineage");
+Object.defineProperty(exports, "getLineage", { enumerable: true, get: function () { return get_lineage_1.handler; } });
+var get_trust_score_1 = require("./get-trust-score");
+Object.defineProperty(exports, "getTrustScore", { enumerable: true, get: function () { return get_trust_score_1.handler; } });
+var generate_report_1 = require("./generate-report");
+Object.defineProperty(exports, "generateReport", { enumerable: true, get: function () { return generate_report_1.handler; } });
+//# sourceMappingURL=index.js.map

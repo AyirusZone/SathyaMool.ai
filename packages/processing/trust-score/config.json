@@ -1,0 +1,21 @@
+{
+  "function_name": "TrustScoreCalculation",
+  "description": "Calculate Trust Score for property verification based on lineage graph and document metadata",
+  "runtime": "python3.12",
+  "handler": "handler.lambda_handler",
+  "memory_size": 256,
+  "timeout": 30,
+  "architecture": "arm64",
+  "environment_variables": {
+    "LINEAGE_TABLE_NAME": "SatyaMool-Lineage",
+    "DOCUMENTS_TABLE_NAME": "SatyaMool-Documents",
+    "PROPERTIES_TABLE_NAME": "SatyaMool-Properties",
+    "TRUST_SCORES_TABLE_NAME": "SatyaMool-TrustScores"
+  },
+  "trigger": {
+    "type": "DynamoDB Stream",
+    "source": "SatyaMool-Lineage",
+    "batch_size": 10,
+    "starting_position": "LATEST"
+  }
+}

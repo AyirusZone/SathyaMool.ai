@@ -3,8 +3,8 @@ frontend:
   phases:
     preBuild:
       commands:
-        - cd packages/frontend
         - npm ci
+        - cd packages/frontend
     build:
       commands:
         - npm run build
@@ -14,6 +14,7 @@ frontend:
       - '**/*'
   cache:
     paths:
+      - node_modules/**/*
       - packages/frontend/node_modules/**/*
 customHeaders:
   - pattern: '**/*'

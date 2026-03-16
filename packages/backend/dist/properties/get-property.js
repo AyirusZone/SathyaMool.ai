@@ -130,6 +130,7 @@ const handler = async (event) => {
             processingStatus: doc.processingStatus || 'pending',
             uploadedAt: doc.uploadedAt,
             pipelineProgress: mapToPipelineProgress(doc.processingStatus || 'pending'),
+            documentSummary: doc.documentSummary ?? null,
         }));
         const derivedStatus = derivePropertyStatus(rawDocuments);
         const responseBody = {

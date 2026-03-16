@@ -18,6 +18,7 @@ export interface DocumentWithPipeline {
   processingStatus: string;
   uploadedAt: string;
   pipelineProgress: PipelineProgress;
+  documentSummary: string | null;
 }
 
 export interface Property {

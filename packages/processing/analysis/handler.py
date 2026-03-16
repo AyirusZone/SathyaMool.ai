@@ -264,8 +264,14 @@ def process_analysis(document_data: Dict[str, Any]) -> None:
         inconsistencies = detect_inconsistencies(extracted_data, property_id)
         extracted_data['inconsistencies'] = inconsistencies
         
-        # Store extracted data
-        store_analysis_results(document_id, property_id, extracted_data)
+        # Generate document summary (Requirements: 1.1, 1.3)
+        if extracted_data.get('bedrock_skipped'):
+            document_summary = None
+        else:
+            document_summary = generate_document_summary(extracted_data, document_id)
+        
+        # Store extracted data and summary
+        store_analysis_results(document_id, property_id, extracted_data, document_summary)
         
         # Update status to analysis_complete (Requirement 3.5, 3.7)
         update_document_status(document_id, property_id, 'analysis_complete')
@@ -680,6 +686,89 @@ def invoke_bedrock_for_extraction(prompt: str, document_id: str) -> Dict[str, An
 
 
 
+def generate_document_summary(
+    extracted_data: Dict[str, Any],
+    document_id: str
+) -> Optional[str]:
+    """
+    Generate a plain-English summary of a property document from extracted data.
+
+    Invokes Bedrock with a short prompt and returns the summary string.
+    Returns None on any error — does not re-raise.
+
+    Requirements: 1.1, 1.4, 1.5, 1.6, 5.1, 5.2, 5.3
+
+    Args:
+        extracted_data: Structured data extracted from the document
+        document_id: Document ID for logging
+
+    Returns:
+        Summary string on success, None on error
+    """
+    logger.info(f"Generating document summary for document {document_id}")
+
+    # Build prompt fields
+    document_type = extracted_data.get('document_type') or 'not found'
+    buyer_name_or_owner = (
+        extracted_data.get('buyer_name')
+        or extracted_data.get('original_owner_name')
+        or 'not found'
+    )
+    seller_name = extracted_data.get('seller_name') or 'not found'
+    survey_numbers_list = extracted_data.get('survey_numbers', [])
+    survey_numbers_str = ', '.join(str(s) for s in survey_numbers_list) if survey_numbers_list else 'not found'
+    date_str = extracted_data.get('transaction_date') or extracted_data.get('grant_date') or 'not found'
+    sale_consideration = extracted_data.get('sale_consideration') or 'not found'
+
+    prompt = f"""You are summarizing an Indian property document for a property verifier.
+Based on the following extracted data, write a concise plain-English summary in no more than 300 words.
+Do not use legal jargon. For any field that is absent or null, state "not found".
+
+Document Type: {document_type}
+Buyer / Purchaser: {buyer_name_or_owner}
+Seller / Vendor: {seller_name}
+Survey Number(s): {survey_numbers_str}
+Transaction / Grant Date: {date_str}
+Sale Consideration: {sale_consideration}
+
+Write the summary now:"""
+
+    try:
+        bedrock_client = get_bedrock_client()
+
+        request_body = {
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": 512,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            "temperature": BEDROCK_TEMPERATURE,
+            "top_p": BEDROCK_TOP_P
+        }
+
+        response = bedrock_client.invoke_model(
+            modelId=BEDROCK_MODEL_ID,
+            body=json.dumps(request_body)
+        )
+
+        response_body = json.loads(response['body'].read())
+        content = response_body.get('content', [])
+        if content and len(content) > 0:
+            summary = content[0].get('text', '').strip()
+            logger.info(f"Successfully generated summary for document {document_id}")
+            return summary
+        else:
+            logger.warning(f"Empty content in Bedrock response for document {document_id}")
+            return None
+
+    except (ClientError, Exception) as e:
+        logger.warning(f"Failed to generate summary for document {document_id}: {str(e)}")
+        return None
+
+
 def detect_inconsistencies(extracted_data: Dict[str, Any], property_id: str) -> List[Dict[str, Any]]:
     """
     Detect inconsistencies in extracted data compared to other documents for the same property.
@@ -819,7 +908,8 @@ def convert_floats_to_decimal(obj: Any) -> Any:
 def store_analysis_results(
     document_id: str,
     property_id: str,
-    extracted_data: Dict[str, Any]
+    extracted_data: Dict[str, Any],
+    document_summary: Optional[str] = None
 ) -> None:
     """
     Store analysis results in DynamoDB Documents table.
@@ -830,6 +920,7 @@ def store_analysis_results(
         document_id: Document ID
         property_id: Property ID
         extracted_data: Extracted structured data
+        document_summary: Plain-English summary of the document, or None
     """
     logger.info(f"Storing analysis results for document {document_id}")
     
@@ -838,6 +929,7 @@ def store_analysis_results(
     # Prepare update expression
     update_expression = """
         SET extractedData = :extracted_data,
+            documentSummary = :document_summary,
             analysisMetadata = :analysis_metadata,
             updatedAt = :updated_at
     """
@@ -852,6 +944,7 @@ def store_analysis_results(
     
     expression_values = {
         ':extracted_data': convert_floats_to_decimal(extracted_data),
+        ':document_summary': document_summary,
         ':analysis_metadata': convert_floats_to_decimal(analysis_metadata),
         ':updated_at': datetime.utcnow().isoformat()
     }

@@ -78,6 +78,28 @@ const DocumentPipelineProgress: React.FC<DocumentPipelineProgressProps> = ({ doc
           </Step>
         ))}
       </Stepper>
+      {document.pipelineProgress.analysis === 'complete' && (
+        <Box
+          data-testid="summary-section"
+          sx={{
+            mt: 2,
+            p: 2,
+            bgcolor: 'grey.50',
+            borderRadius: 1,
+            border: '1px solid',
+            borderColor: 'grey.200',
+          }}
+        >
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
+            Analysis Summary
+          </Typography>
+          <Typography variant="body2" color="text.primary">
+            {document.documentSummary
+              ? document.documentSummary
+              : 'Summary not available for this document.'}
+          </Typography>
+        </Box>
+      )}
     </Box>
   );
 };

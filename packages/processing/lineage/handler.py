@@ -214,9 +214,13 @@ def check_all_documents_analyzed(property_id: str) -> bool:
             logger.warning(f"No documents found for property {property_id}")
             return False
         
-        # Check if all non-failed documents have analysis_complete status (Requirement 3.7)
+        # Check if all non-failed/non-stuck documents have analysis_complete status (Requirement 3.7)
         # Documents with *_failed status are permanently failed and should not block the pipeline
-        TERMINAL_FAILED_STATUSES = {'ocr_failed', 'translation_failed', 'analysis_failed'}
+        # Documents stuck in *_processing states (Lambda retries exhausted) also should not block lineage
+        TERMINAL_FAILED_STATUSES = {
+            'ocr_failed', 'translation_failed', 'analysis_failed',
+            'ocr_processing', 'translation_processing', 'analysis_processing'
+        }
         eligible_docs = [doc for doc in documents if doc.get('processingStatus') not in TERMINAL_FAILED_STATUSES]
         
         if not eligible_docs:
@@ -1228,11 +1232,15 @@ def update_all_documents_status(
     for doc in documents:
         document_id = doc.get('documentId')
         if document_id:
-            # Skip permanently failed documents — don't overwrite their failed status
-            TERMINAL_FAILED_STATUSES = {'ocr_failed', 'translation_failed', 'analysis_failed'}
+            # Skip permanently failed or stuck-processing documents — don't overwrite their status
+            # unless we're explicitly marking them as failed
+            SKIP_STATUSES = {
+                'ocr_failed', 'translation_failed', 'analysis_failed',
+                'ocr_processing', 'translation_processing', 'analysis_processing'
+            }
             current_status = doc.get('processingStatus', '')
-            if current_status in TERMINAL_FAILED_STATUSES and not status.endswith('_failed'):
-                logger.debug(f"Skipping status update for permanently failed document {document_id} ({current_status})")
+            if current_status in SKIP_STATUSES and not status.endswith('_failed'):
+                logger.debug(f"Skipping status update for document {document_id} with status {current_status}")
                 continue
             try:
                 update_document_status(document_id, property_id, status, error_message)

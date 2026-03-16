@@ -309,11 +309,23 @@ def process_document(s3_record: Dict[str, Any]) -> None:
         
         logger.info(f"Document size: {file_size} bytes")
         
+        # Textract sync API has a 10MB (10,485,760 bytes) limit
+        # For files over 10MB, use async API or PyMuPDF fallback
+        TEXTRACT_SYNC_SIZE_LIMIT = 10 * 1024 * 1024  # 10MB
+        
         # Determine if we should use sync or async Textract API
         # For now, we'll estimate pages based on file size (rough estimate: 100KB per page)
         estimated_pages = max(1, file_size // (100 * 1024))
         
-        if estimated_pages <= SYNC_PAGE_THRESHOLD:
+        if file_size > TEXTRACT_SYNC_SIZE_LIMIT:
+            # File too large for sync API — try async, fall back to PyMuPDF
+            logger.info(f"File size {file_size} bytes exceeds sync limit, trying async Textract")
+            try:
+                ocr_result = process_document_async(bucket_name, object_key)
+            except Exception as async_err:
+                logger.warning(f"Async Textract failed ({async_err}), trying PyMuPDF fallback")
+                ocr_result = repair_pdf_and_extract_text(bucket_name, object_key)
+        elif estimated_pages <= SYNC_PAGE_THRESHOLD:
             # Use synchronous Textract API
             logger.info(f"Using sync Textract API (estimated {estimated_pages} pages)")
             ocr_result = process_document_sync(bucket_name, object_key)
@@ -893,6 +905,20 @@ def store_ocr_results(
     """
     
     # Build comprehensive confidence metadata (Requirements 4.4, 4.5)
+    # Strip geometry from low_confidence_regions to avoid DynamoDB size limits
+    # and float serialization issues with nested Textract geometry objects
+    safe_low_confidence_regions = [
+        {
+            'block_id': r.get('block_id'),
+            'block_type': r.get('block_type'),
+            'text': r.get('text', '')[:200],  # cap text length
+            'confidence': r.get('confidence'),
+            'text_type': r.get('text_type'),
+            'page': r.get('page', 1)
+        }
+        for r in ocr_result['low_confidence_regions'][:100]  # cap at 100 regions
+    ]
+
     ocr_metadata = {
         'forms_count': ocr_result['forms_count'],
         'tables_count': ocr_result['tables_count'],
@@ -902,7 +928,7 @@ def store_ocr_results(
         'low_confidence_flag': ocr_result['average_confidence'] < 70,
         'low_confidence_count': ocr_result['low_confidence_count'],
         'has_handwritten_text': ocr_result['has_handwritten_text'],
-        'low_confidence_regions': ocr_result['low_confidence_regions']
+        'low_confidence_regions': safe_low_confidence_regions
     }
     
     # Convert all floats to Decimal for DynamoDB compatibility

@@ -28,6 +28,50 @@ import LineageGraph from '../components/LineageGraph';
 import TrustScoreBreakdown from '../components/TrustScoreBreakdown';
 import DocumentPipelineProgress from '../components/DocumentPipelineProgress';
 
+const STEP_LABELS: Record<string, string> = {
+  upload: 'Upload',
+  ocr: 'OCR',
+  translation: 'Translation',
+  analysis: 'Analysis',
+  lineage: 'Lineage',
+  scoring: 'Scoring',
+};
+
+interface FailureEntry {
+  fileName: string;
+  failedSteps: string[];
+}
+
+const PipelineFailureSummary: React.FC<{ documents: DocumentWithPipeline[] }> = ({ documents }) => {
+  const failures: FailureEntry[] = documents
+    .map(doc => ({
+      fileName: doc.fileName,
+      failedSteps: Object.entries(doc.pipelineProgress)
+        .filter(([, status]) => status === 'failed')
+        .map(([step]) => STEP_LABELS[step] || step),
+    }))
+    .filter(entry => entry.failedSteps.length > 0);
+
+  if (failures.length === 0) return null;
+
+  return (
+    <Alert
+      severity="error"
+      sx={{ mb: 3 }}
+      icon={false}
+    >
+      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+        {failures.length} document{failures.length > 1 ? 's' : ''} failed processing
+      </Typography>
+      {failures.map(({ fileName, failedSteps }) => (
+        <Typography key={fileName} variant="body2">
+          <strong>{fileName}</strong> — failed at: {failedSteps.join(', ')}
+        </Typography>
+      ))}
+    </Alert>
+  );
+};
+
 const PropertyDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -250,11 +294,14 @@ const PropertyDetails: React.FC = () => {
                 {tab === 1 && (
                   <Box>
                     {property.documents && property.documents.length > 0 ? (
-                      property.documents.map(doc => (
-                        <Box key={doc.documentId} sx={{ mb: 3 }}>
-                          <DocumentPipelineProgress document={doc} />
-                        </Box>
-                      ))
+                      <>
+                        <PipelineFailureSummary documents={property.documents} />
+                        {property.documents.map(doc => (
+                          <Box key={doc.documentId} sx={{ mb: 3 }}>
+                            <DocumentPipelineProgress document={doc} />
+                          </Box>
+                        ))}
+                      </>
                     ) : (
                       <Typography color="text.secondary">No documents uploaded yet.</Typography>
                     )}

@@ -25,6 +25,10 @@ import {
   ToggleButton,
   Tooltip,
   Chip,
+  Collapse,
+  IconButton,
+  Divider,
+  Stack,
 } from '@mui/material';
 import {
   Download as DownloadIcon,
@@ -34,8 +38,17 @@ import {
   Error as ErrorIcon,
   RadioButtonUnchecked as PendingIcon,
   HourglassEmpty as InProgressIcon,
+  KeyboardArrowDown as ExpandIcon,
+  KeyboardArrowUp as CollapseIcon,
+  Article as ArticleIcon,
 } from '@mui/icons-material';
-import propertyService, { Property, LineageGraph as LineageGraphType, TrustScore, DocumentWithPipeline, PipelineStepStatus } from '../services/property';
+import propertyService, {
+  Property,
+  LineageGraph as LineageGraphType,
+  TrustScore,
+  DocumentWithPipeline,
+  PipelineStepStatus,
+} from '../services/property';
 import ProcessingStatus from '../components/ProcessingStatus';
 import DocumentUpload from '../components/DocumentUpload';
 import LineageGraph from '../components/LineageGraph';
@@ -63,7 +76,6 @@ const StepChip: React.FC<{ status: PipelineStepStatus }> = ({ status }) => {
   return <Chip icon={icon} label={label} color={color} size="small" variant="outlined" />;
 };
 
-/** Derive an overall doc status for filtering */
 function docOverallStatus(doc: DocumentWithPipeline): FilterStatus {
   const vals = Object.values(doc.pipelineProgress);
   if (vals.some(s => s === 'failed')) return 'failed';
@@ -99,6 +111,127 @@ const PipelineFailureSummary: React.FC<{ documents: DocumentWithPipeline[] }> = 
   );
 };
 
+/** Expandable table row with inline summary */
+const DocRow: React.FC<{ doc: DocumentWithPipeline }> = ({ doc }) => {
+  const [open, setOpen] = useState(false);
+  const overall = docOverallStatus(doc);
+  const hasSummary = doc.pipelineProgress.analysis === 'complete';
+
+  return (
+    <>
+      <TableRow
+        hover
+        sx={{ cursor: hasSummary ? 'pointer' : 'default' }}
+        onClick={() => hasSummary && setOpen(o => !o)}
+      >
+        <TableCell sx={{ width: 32, pr: 0 }}>
+          {hasSummary && (
+            <IconButton size="small" onClick={e => { e.stopPropagation(); setOpen(o => !o); }}>
+              {open ? <CollapseIcon fontSize="small" /> : <ExpandIcon fontSize="small" />}
+            </IconButton>
+          )}
+        </TableCell>
+        <TableCell>
+          <Tooltip title={doc.fileName}>
+            <Typography
+              variant="body2"
+              sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+            >
+              {doc.fileName}
+            </Typography>
+          </Tooltip>
+        </TableCell>
+        {PIPELINE_STEPS.map(step => (
+          <TableCell key={step} align="center">
+            <StepChip status={doc.pipelineProgress[step]} />
+          </TableCell>
+        ))}
+        <TableCell align="center">
+          <Chip
+            label={overall === 'success' ? 'Complete' : overall === 'failed' ? 'Failed' : overall === 'in_progress' ? 'Running' : 'Pending'}
+            color={overall === 'success' ? 'success' : overall === 'failed' ? 'error' : overall === 'in_progress' ? 'warning' : 'default'}
+            size="small"
+          />
+        </TableCell>
+      </TableRow>
+      {hasSummary && (
+        <TableRow>
+          <TableCell colSpan={PIPELINE_STEPS.length + 3} sx={{ py: 0, borderBottom: open ? undefined : 'none' }}>
+            <Collapse in={open} unmountOnExit>
+              <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1, my: 1 }}>
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
+                  Analysis Summary
+                </Typography>
+                <Typography variant="body2">
+                  {doc.documentSummary || 'Summary not available for this document.'}
+                </Typography>
+              </Box>
+            </Collapse>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
+  );
+};
+
+/** Score & Analysis tab: trust score + all document summaries + lineage */
+const ScoreAndAnalysisTab: React.FC<{
+  trustScore: TrustScore | null;
+  documents: DocumentWithPipeline[];
+  lineage: LineageGraphType | null;
+}> = ({ trustScore, documents, lineage }) => {
+  const analysedDocs = documents.filter(d => d.pipelineProgress.analysis === 'complete');
+
+  return (
+    <Box>
+      {/* Trust Score */}
+      {trustScore ? (
+        <TrustScoreBreakdown trustScore={trustScore} />
+      ) : (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Trust score will be available once all documents finish processing.
+        </Alert>
+      )}
+
+      {/* Document Summaries */}
+      {analysedDocs.length > 0 && (
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h6" gutterBottom>
+            Document Summaries
+          </Typography>
+          <Stack spacing={2}>
+            {analysedDocs.map(doc => (
+              <Paper key={doc.documentId} variant="outlined" sx={{ p: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <ArticleIcon fontSize="small" color="action" />
+                  <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
+                    {doc.fileName}
+                  </Typography>
+                  <Chip label="Analysed" color="success" size="small" variant="outlined" />
+                </Box>
+                <Divider sx={{ mb: 1 }} />
+                <Typography variant="body2" color={doc.documentSummary ? 'text.primary' : 'text.secondary'}>
+                  {doc.documentSummary || 'Summary not available for this document.'}
+                </Typography>
+              </Paper>
+            ))}
+          </Stack>
+        </Box>
+      )}
+
+      {/* Lineage Graph */}
+      {lineage && (
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h6" gutterBottom>
+            Ownership Lineage
+          </Typography>
+          <LineageGraph nodes={lineage.nodes} edges={lineage.edges} metadata={lineage.metadata} />
+        </Box>
+      )}
+    </Box>
+  );
+};
+
 const PropertyDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -128,14 +261,11 @@ const PropertyDetails: React.FC = () => {
   };
 
   useEffect(() => {
-    if (id) {
-      loadProperty();
-    }
+    if (id) loadProperty();
   }, [id]);
 
   useEffect(() => {
     if (!id || !property) return;
-
     if (allStepsTerminal(property.documents)) return;
 
     const interval = setInterval(async () => {
@@ -147,13 +277,9 @@ const PropertyDetails: React.FC = () => {
         const data = await propertyService.getProperty(id);
         setProperty(data);
         consecutiveFailuresRef.current = 0;
-        if (data.status === 'completed') {
-          await loadLineageAndScore();
-        }
-        if (allStepsTerminal(data.documents)) {
-          clearInterval(interval);
-        }
-      } catch (err: any) {
+        if (data.status === 'completed') await loadLineageAndScore();
+        if (allStepsTerminal(data.documents)) clearInterval(interval);
+      } catch {
         consecutiveFailuresRef.current += 1;
         if (consecutiveFailuresRef.current >= 3) {
           clearInterval(interval);
@@ -167,19 +293,13 @@ const PropertyDetails: React.FC = () => {
 
   const loadProperty = async () => {
     if (!id) return;
-
     try {
       setLoading(true);
       const data = await propertyService.getProperty(id);
       setProperty(data);
-
-      if (data.status === 'completed') {
-        await loadLineageAndScore();
-      }
-      // Always try to load lineage (shows partial/empty state with gap info)
-      if (!lineage) {
-        loadLineageAndScore().catch(() => {});
-      }    } catch (err: any) {
+      if (data.status === 'completed') await loadLineageAndScore();
+      if (!lineage) loadLineageAndScore().catch(() => {});
+    } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load property');
     } finally {
       setLoading(false);
@@ -188,7 +308,6 @@ const PropertyDetails: React.FC = () => {
 
   const loadLineageAndScore = async () => {
     if (!id) return;
-
     try {
       const [lineageData, scoreData] = await Promise.all([
         propertyService.getLineage(id),
@@ -203,7 +322,6 @@ const PropertyDetails: React.FC = () => {
 
   const handleDownloadReport = async () => {
     if (!id) return;
-
     try {
       setDownloading(true);
       const reportUrl = await propertyService.downloadReport(id);
@@ -217,7 +335,6 @@ const PropertyDetails: React.FC = () => {
 
   const handleDelete = async () => {
     if (!id) return;
-
     try {
       await propertyService.deleteProperty(id);
       navigate('/dashboard');
@@ -244,14 +361,15 @@ const PropertyDetails: React.FC = () => {
     );
   }
 
+  const docs = property.documents ?? [];
+  const filteredDocs = docs.filter(doc => docFilter === 'all' || docOverallStatus(doc) === docFilter);
+
   return (
     <Container maxWidth="xl">
       <Box sx={{ mb: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Box>
-            <Typography variant="h4" gutterBottom>
-              {property.address}
-            </Typography>
+            <Typography variant="h4" gutterBottom>{property.address}</Typography>
             {property.surveyNumber && (
               <Typography variant="body2" color="text.secondary">
                 Survey No: {property.surveyNumber}
@@ -259,11 +377,7 @@ const PropertyDetails: React.FC = () => {
             )}
           </Box>
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button
-              startIcon={<RefreshIcon />}
-              onClick={loadProperty}
-              disabled={loading}
-            >
+            <Button startIcon={<RefreshIcon />} onClick={loadProperty} disabled={loading}>
               Refresh
             </Button>
             {property.status === 'completed' && (
@@ -276,11 +390,7 @@ const PropertyDetails: React.FC = () => {
                 {downloading ? 'Downloading...' : 'Download Report'}
               </Button>
             )}
-            <Button
-              color="error"
-              startIcon={<DeleteIcon />}
-              onClick={() => setDeleteDialog(true)}
-            >
+            <Button color="error" startIcon={<DeleteIcon />} onClick={() => setDeleteDialog(true)}>
               Delete
             </Button>
           </Box>
@@ -308,10 +418,11 @@ const PropertyDetails: React.FC = () => {
                 <Tab label="Upload Documents" />
                 <Tab label="Documents" />
                 <Tab label="Lineage Graph" />
-                {property.status === 'completed' && <Tab label="Trust Score" />}
+                <Tab label="Score & Analysis" />
               </Tabs>
 
               <Box sx={{ p: 3 }}>
+                {/* Tab 0: Upload */}
                 {tab === 0 && (
                   <DocumentUpload
                     propertyId={property.propertyId}
@@ -319,13 +430,13 @@ const PropertyDetails: React.FC = () => {
                   />
                 )}
 
+                {/* Tab 1: Documents table with expandable summaries */}
                 {tab === 1 && (
                   <Box>
-                    {property.documents && property.documents.length > 0 ? (
+                    {docs.length > 0 ? (
                       <>
-                        <PipelineFailureSummary documents={property.documents} />
+                        <PipelineFailureSummary documents={docs} />
 
-                        {/* Filter bar */}
                         <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
                           <Typography variant="body2" color="text.secondary">Filter:</Typography>
                           <ToggleButtonGroup
@@ -334,27 +445,27 @@ const PropertyDetails: React.FC = () => {
                             onChange={(_, v) => v && setDocFilter(v)}
                             size="small"
                           >
-                            <ToggleButton value="all">All ({property.documents.length})</ToggleButton>
+                            <ToggleButton value="all">All ({docs.length})</ToggleButton>
                             <ToggleButton value="success">
-                              Success ({property.documents.filter(d => docOverallStatus(d) === 'success').length})
+                              Success ({docs.filter(d => docOverallStatus(d) === 'success').length})
                             </ToggleButton>
                             <ToggleButton value="failed">
-                              Failed ({property.documents.filter(d => docOverallStatus(d) === 'failed').length})
+                              Failed ({docs.filter(d => docOverallStatus(d) === 'failed').length})
                             </ToggleButton>
                             <ToggleButton value="in_progress">
-                              In Progress ({property.documents.filter(d => docOverallStatus(d) === 'in_progress').length})
+                              In Progress ({docs.filter(d => docOverallStatus(d) === 'in_progress').length})
                             </ToggleButton>
                             <ToggleButton value="pending">
-                              Pending ({property.documents.filter(d => docOverallStatus(d) === 'pending').length})
+                              Pending ({docs.filter(d => docOverallStatus(d) === 'pending').length})
                             </ToggleButton>
                           </ToggleButtonGroup>
                         </Box>
 
-                        {/* Table */}
                         <TableContainer component={Paper} variant="outlined">
                           <Table size="small">
                             <TableHead>
                               <TableRow sx={{ bgcolor: 'grey.50' }}>
+                                <TableCell sx={{ width: 32 }} />
                                 <TableCell sx={{ fontWeight: 600 }}>File Name</TableCell>
                                 {PIPELINE_STEPS.map(step => (
                                   <TableCell key={step} align="center" sx={{ fontWeight: 600 }}>
@@ -365,45 +476,12 @@ const PropertyDetails: React.FC = () => {
                               </TableRow>
                             </TableHead>
                             <TableBody>
-                              {property.documents
-                                .filter(doc => docFilter === 'all' || docOverallStatus(doc) === docFilter)
-                                .map(doc => {
-                                  const overall = docOverallStatus(doc);
-                                  return (
-                                    <TableRow key={doc.documentId} hover>
-                                      <TableCell>
-                                        <Tooltip title={doc.fileName}>
-                                          <Typography
-                                            variant="body2"
-                                            sx={{
-                                              maxWidth: 220,
-                                              overflow: 'hidden',
-                                              textOverflow: 'ellipsis',
-                                              whiteSpace: 'nowrap',
-                                            }}
-                                          >
-                                            {doc.fileName}
-                                          </Typography>
-                                        </Tooltip>
-                                      </TableCell>
-                                      {PIPELINE_STEPS.map(step => (
-                                        <TableCell key={step} align="center">
-                                          <StepChip status={doc.pipelineProgress[step]} />
-                                        </TableCell>
-                                      ))}
-                                      <TableCell align="center">
-                                        <Chip
-                                          label={overall === 'success' ? 'Complete' : overall === 'failed' ? 'Failed' : overall === 'in_progress' ? 'Running' : 'Pending'}
-                                          color={overall === 'success' ? 'success' : overall === 'failed' ? 'error' : overall === 'in_progress' ? 'warning' : 'default'}
-                                          size="small"
-                                        />
-                                      </TableCell>
-                                    </TableRow>
-                                  );
-                                })}
-                              {property.documents.filter(doc => docFilter === 'all' || docOverallStatus(doc) === docFilter).length === 0 && (
+                              {filteredDocs.map(doc => (
+                                <DocRow key={doc.documentId} doc={doc} />
+                              ))}
+                              {filteredDocs.length === 0 && (
                                 <TableRow>
-                                  <TableCell colSpan={PIPELINE_STEPS.length + 2} align="center" sx={{ py: 4 }}>
+                                  <TableCell colSpan={PIPELINE_STEPS.length + 3} align="center" sx={{ py: 4 }}>
                                     <Typography color="text.secondary">No documents match this filter.</Typography>
                                   </TableCell>
                                 </TableRow>
@@ -411,6 +489,12 @@ const PropertyDetails: React.FC = () => {
                             </TableBody>
                           </Table>
                         </TableContainer>
+
+                        {docs.some(d => d.pipelineProgress.analysis === 'complete') && (
+                          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                            Click a row to expand the analysis summary.
+                          </Typography>
+                        )}
                       </>
                     ) : (
                       <Typography color="text.secondary">No documents uploaded yet.</Typography>
@@ -418,10 +502,10 @@ const PropertyDetails: React.FC = () => {
                   </Box>
                 )}
 
+                {/* Tab 2: Lineage Graph */}
                 {tab === 2 && lineage && (
                   <LineageGraph nodes={lineage.nodes} edges={lineage.edges} metadata={lineage.metadata} />
                 )}
-
                 {tab === 2 && !lineage && (
                   <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
                     {property.status === 'completed' ? (
@@ -434,8 +518,13 @@ const PropertyDetails: React.FC = () => {
                   </Box>
                 )}
 
-                {tab === 3 && trustScore && (
-                  <TrustScoreBreakdown trustScore={trustScore} />
+                {/* Tab 3: Score & Analysis */}
+                {tab === 3 && (
+                  <ScoreAndAnalysisTab
+                    trustScore={trustScore}
+                    documents={docs}
+                    lineage={lineage}
+                  />
                 )}
               </Box>
             </Paper>
@@ -453,9 +542,7 @@ const PropertyDetails: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialog(false)}>Cancel</Button>
-          <Button onClick={handleDelete} color="error" variant="contained">
-            Delete
-          </Button>
+          <Button onClick={handleDelete} color="error" variant="contained">Delete</Button>
         </DialogActions>
       </Dialog>
     </Container>

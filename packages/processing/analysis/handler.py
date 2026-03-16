@@ -34,11 +34,11 @@ logger.setLevel(logging.INFO)
 
 # Environment variables
 DOCUMENTS_TABLE_NAME = os.environ.get('DOCUMENTS_TABLE_NAME', 'SatyaMool-Documents')
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 
-# Gemini configuration
-GEMINI_MODEL = 'gemini-2.0-flash'
-GEMINI_API_URL = f'https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent'
+# Groq configuration
+GROQ_MODEL = 'llama-3.3-70b-versatile'
+GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
 
 # AWS clients (lazy initialization)
 _dynamodb = None
@@ -566,33 +566,35 @@ Extract the information accurately. If a field is not found, use null or empty a
 
 def invoke_gemini_for_extraction(prompt: str, document_id: str) -> Dict[str, Any]:
     """
-    Invoke Google Gemini API for structured data extraction.
+    Invoke Groq API (Llama 3.3 70B) for structured data extraction.
     Uses urllib (stdlib only, no extra packages needed in Lambda).
     Retries on 429 rate-limit errors with exponential backoff.
     """
-    logger.info(f"Invoking Gemini for document {document_id}")
+    logger.info(f"Invoking Groq for document {document_id}")
     start_time = time.time()
 
-    if not GEMINI_API_KEY:
-        raise ValueError("GEMINI_API_KEY environment variable not set")
+    if not GROQ_API_KEY:
+        raise ValueError("GROQ_API_KEY environment variable not set")
 
     payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {
-            "temperature": 0.0,
-            "maxOutputTokens": 4096,
-        }
+        "model": GROQ_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.0,
+        "max_tokens": 4096,
     }
 
-    url = f"{GEMINI_API_URL}?key={GEMINI_API_KEY}"
     data = json.dumps(payload).encode('utf-8')
 
     max_retries = 3
     for attempt in range(max_retries):
         req = urllib.request.Request(
-            url,
+            GROQ_API_URL,
             data=data,
-            headers={'Content-Type': 'application/json'},
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {GROQ_API_KEY}',
+                'User-Agent': 'SatyaMool-PropertyAnalysis/1.0'
+            },
             method='POST'
         )
         try:
@@ -602,47 +604,66 @@ def invoke_gemini_for_extraction(prompt: str, document_id: str) -> Dict[str, Any
         except urllib.error.HTTPError as e:
             error_body = e.read().decode('utf-8')
             if e.code == 429 and attempt < max_retries - 1:
-                wait = 45 * (attempt + 1)
-                logger.warning(f"Gemini rate limited (429), retrying in {wait}s (attempt {attempt+1}/{max_retries})")
+                wait = 30 * (attempt + 1)
+                logger.warning(f"Groq rate limited (429), retrying in {wait}s (attempt {attempt+1}/{max_retries})")
                 time.sleep(wait)
                 continue
-            logger.error(f"Gemini HTTP error {e.code}: {error_body}")
-            raise Exception(f"Gemini API error {e.code}: {error_body}")
+            logger.error(f"Groq HTTP error {e.code}: {error_body}")
+            raise Exception(f"Groq API error {e.code}: {error_body}")
     else:
-        raise Exception("Gemini API failed after all retries")
+        raise Exception("Groq API failed after all retries")
 
     elapsed = time.time() - start_time
 
-    # Extract text from Gemini response
+    # Extract text from OpenAI-compatible response
     try:
-        text_content = response_body['candidates'][0]['content']['parts'][0]['text']
+        text_content = response_body['choices'][0]['message']['content']
     except (KeyError, IndexError) as e:
-        raise Exception(f"Unexpected Gemini response structure: {response_body}")
+        raise Exception(f"Unexpected Groq response structure: {response_body}")
 
-    # Strip markdown code fences if present
+    # Extract JSON object from response, ignoring any preamble or postamble text
     text_content = text_content.strip()
-    if text_content.startswith('```json'):
-        text_content = text_content[7:]
-    if text_content.startswith('```'):
-        text_content = text_content[3:]
-    if text_content.endswith('```'):
-        text_content = text_content[:-3]
-    text_content = text_content.strip()
+    # Find the first {
+    json_start = text_content.find('{')
+    if json_start >= 0:
+        text_content = text_content[json_start:]
+    # Find the matching closing } by tracking depth
+    depth, end, in_str, escape = 0, 0, False, False
+    for i, ch in enumerate(text_content):
+        if escape:
+            escape = False
+            continue
+        if ch == '\\' and in_str:
+            escape = True
+            continue
+        if ch == '"':
+            in_str = not in_str
+            continue
+        if not in_str:
+            if ch == '{':
+                depth += 1
+            elif ch == '}':
+                depth -= 1
+                if depth == 0:
+                    end = i + 1
+                    break
+    if end > 0:
+        text_content = text_content[:end]
 
     try:
         extracted_data = json.loads(text_content)
     except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse Gemini JSON response: {text_content[:500]}")
-        raise Exception(f"Gemini returned non-JSON: {str(e)}")
+        logger.error(f"Failed to parse Groq JSON response: {text_content[:500]}")
+        raise Exception(f"Groq returned non-JSON: {str(e)}")
 
     extracted_data['_ai_metadata'] = {
-        'provider': 'gemini',
-        'model': GEMINI_MODEL,
+        'provider': 'groq',
+        'model': GROQ_MODEL,
         'elapsed_seconds': round(elapsed, 2),
         'timestamp': datetime.utcnow().isoformat()
     }
 
-    logger.info(f"Gemini extraction complete for {document_id} in {elapsed:.2f}s")
+    logger.info(f"Groq extraction complete for {document_id} in {elapsed:.2f}s")
     return extracted_data
 
 
@@ -700,16 +721,22 @@ Sale Consideration: {sale_consideration}
 Write the summary now:"""
 
     try:
-        url = f"{GEMINI_API_URL}?key={GEMINI_API_KEY}"
         payload = {
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {"temperature": 0.0, "maxOutputTokens": 512}
+            "model": GROQ_MODEL,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.0,
+            "max_tokens": 512,
         }
         data = json.dumps(payload).encode('utf-8')
-        req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'}, method='POST')
+        req = urllib.request.Request(
+            GROQ_API_URL,
+            data=data,
+            headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {GROQ_API_KEY}', 'User-Agent': 'SatyaMool-PropertyAnalysis/1.0'},
+            method='POST'
+        )
         with urllib.request.urlopen(req, timeout=30) as resp:
             response_body = json.loads(resp.read().decode('utf-8'))
-        summary = response_body['candidates'][0]['content']['parts'][0]['text'].strip()
+        summary = response_body['choices'][0]['message']['content'].strip()
         logger.info(f"Successfully generated summary for document {document_id}")
         return summary
     except (ClientError, Exception) as e:
@@ -885,7 +912,7 @@ def store_analysis_results(
     # Build analysis metadata
     analysis_metadata = {
         'analysis_timestamp': datetime.utcnow().isoformat(),
-        'model_id': BEDROCK_MODEL_ID,
+        'model_id': GROQ_MODEL,
         'document_type': extracted_data.get('document_type', 'unknown'),
         'inconsistencies_count': len(extracted_data.get('inconsistencies', []))
     }

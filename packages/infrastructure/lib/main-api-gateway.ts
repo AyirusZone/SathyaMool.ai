@@ -183,10 +183,10 @@ export class MainApiGateway extends Construct {
       }
     );
 
-    // POST /v1/properties/{propertyId}/report
+    // GET /v1/properties/{propertyId}/report
     const reportResource = propertyResource.addResource('report');
     reportResource.addMethod(
-      'POST',
+      'GET',
       new apigateway.LambdaIntegration(props.generateReportLambda),
       {
         authorizer: authorizer,

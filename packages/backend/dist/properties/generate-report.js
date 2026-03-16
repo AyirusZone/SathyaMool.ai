@@ -39,19 +39,14 @@ const handler = async (event) => {
             return createErrorResponse(400, 'MISSING_PROPERTY_ID', 'Property ID is required');
         }
         // Check property ownership
-        const propertyQuery = new lib_dynamodb_1.QueryCommand({
+        const propertyResult = await docClient.send(new lib_dynamodb_1.GetCommand({
             TableName: PROPERTIES_TABLE_NAME,
-            KeyConditionExpression: 'propertyId = :propertyId',
-            ExpressionAttributeValues: {
-                ':propertyId': propertyId,
-            },
-            Limit: 1,
-        });
-        const propertyResult = await docClient.send(propertyQuery);
-        if (!propertyResult.Items || propertyResult.Items.length === 0) {
+            Key: { propertyId },
+        }));
+        if (!propertyResult.Item) {
             return createErrorResponse(404, 'PROPERTY_NOT_FOUND', 'Property not found');
         }
-        const property = propertyResult.Items[0];
+        const property = propertyResult.Item;
         // Authorization check: user owns property or is admin
         const isOwner = property.userId === userId;
         const isAdmin = userRole === 'Admin_User';
@@ -91,7 +86,7 @@ const handler = async (event) => {
             // S3 lifecycle policy will handle deletion after 7 days
         }));
         // Generate presigned URL with 15-minute expiration
-        const presignedUrl = await (0, s3_request_presigner_1.getSignedUrl)(s3Client, new client_s3_1.PutObjectCommand({
+        const presignedUrl = await (0, s3_request_presigner_1.getSignedUrl)(s3Client, new client_s3_1.GetObjectCommand({
             Bucket: REPORTS_BUCKET_NAME,
             Key: reportKey,
         }), { expiresIn: 900 } // 15 minutes

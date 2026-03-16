@@ -1,7 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import PDFDocument = require('pdfkit');
 
@@ -53,22 +53,16 @@ export const handler = async (
     }
 
     // Check property ownership
-    const propertyQuery = new QueryCommand({
+    const propertyResult = await docClient.send(new GetCommand({
       TableName: PROPERTIES_TABLE_NAME,
-      KeyConditionExpression: 'propertyId = :propertyId',
-      ExpressionAttributeValues: {
-        ':propertyId': propertyId,
-      },
-      Limit: 1,
-    });
+      Key: { propertyId },
+    }));
 
-    const propertyResult = await docClient.send(propertyQuery);
-
-    if (!propertyResult.Items || propertyResult.Items.length === 0) {
+    if (!propertyResult.Item) {
       return createErrorResponse(404, 'PROPERTY_NOT_FOUND', 'Property not found');
     }
 
-    const property = propertyResult.Items[0];
+    const property = propertyResult.Item;
 
     // Authorization check: user owns property or is admin
     const isOwner = property.userId === userId;
@@ -130,7 +124,7 @@ export const handler = async (
     // Generate presigned URL with 15-minute expiration
     const presignedUrl = await getSignedUrl(
       s3Client,
-      new PutObjectCommand({
+      new GetObjectCommand({
         Bucket: REPORTS_BUCKET_NAME,
         Key: reportKey,
       }),

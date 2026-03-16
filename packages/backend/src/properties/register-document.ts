@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3';
 import {
   createAuditLog,
@@ -159,6 +159,11 @@ export const handler = async (
           ConditionExpression: 'attribute_not_exists(documentId) AND attribute_not_exists(propertyId)',
         });
 
+        if (success) {
+          // Atomically increment documentCount on the property (new document only)
+          await incrementDocumentCount(propertyId);
+        }
+
         if (!success) {
           // Document already registered, fetch and return it
           console.log(`Document ${body.documentId} already registered, fetching existing record`);
@@ -260,6 +265,31 @@ export const handler = async (
     );
   }
 };
+
+/**
+ * Atomically increment documentCount on the property record.
+ * Retries up to 3 times; logs a CloudWatch error if all attempts fail.
+ * Does NOT affect the 201 response to the caller.
+ */
+async function incrementDocumentCount(propertyId: string): Promise<void> {
+  const MAX_ATTEMPTS = 3;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      await docClient.send(new UpdateCommand({
+        TableName: PROPERTIES_TABLE_NAME,
+        Key: { propertyId },
+        UpdateExpression: 'ADD documentCount :one',
+        ExpressionAttributeValues: { ':one': 1 },
+      }));
+      return;
+    } catch (err) {
+      console.error(`incrementDocumentCount attempt ${attempt}/${MAX_ATTEMPTS} failed for propertyId=${propertyId}:`, err);
+      if (attempt === MAX_ATTEMPTS) {
+        console.error(`CLOUDWATCH_ERROR incrementDocumentCount: all ${MAX_ATTEMPTS} attempts failed for propertyId=${propertyId}. Manual reconciliation required.`);
+      }
+    }
+  }
+}
 
 /**
  * Get property from DynamoDB

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -21,12 +21,12 @@ import {
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
-import propertyService, { Property, LineageGraph as LineageGraphType, TrustScore } from '../services/property';
+import propertyService, { Property, LineageGraph as LineageGraphType, TrustScore, DocumentWithPipeline } from '../services/property';
 import ProcessingStatus from '../components/ProcessingStatus';
 import DocumentUpload from '../components/DocumentUpload';
-import DocumentList from '../components/DocumentList';
 import LineageGraph from '../components/LineageGraph';
 import TrustScoreBreakdown from '../components/TrustScoreBreakdown';
+import DocumentPipelineProgress from '../components/DocumentPipelineProgress';
 
 const PropertyDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -39,21 +39,59 @@ const PropertyDetails: React.FC = () => {
   const [tab, setTab] = useState(0);
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const consecutiveFailuresRef = useRef(0);
+
+  const hasActiveSteps = (documents: DocumentWithPipeline[] | undefined): boolean => {
+    if (!documents || documents.length === 0) return false;
+    return documents.some(doc =>
+      Object.values(doc.pipelineProgress).some(status => status === 'in_progress')
+    );
+  };
+
+  const allStepsTerminal = (documents: DocumentWithPipeline[] | undefined): boolean => {
+    if (!documents || documents.length === 0) return true;
+    return documents.every(doc =>
+      Object.values(doc.pipelineProgress).every(status => status === 'complete' || status === 'failed')
+    );
+  };
 
   useEffect(() => {
     if (id) {
       loadProperty();
-      
-      // Auto-refresh when property has documents but is not completed
-      const interval = setInterval(() => {
-        if (property && property.documentCount > 0 && property.status !== 'completed' && property.status !== 'failed') {
-          loadProperty();
-        }
-      }, 10000); // Refresh every 10 seconds
-
-      return () => clearInterval(interval);
     }
-  }, [id, property?.status, property?.documentCount]);
+  }, [id]);
+
+  useEffect(() => {
+    if (!id || !property) return;
+
+    if (allStepsTerminal(property.documents)) return;
+
+    const interval = setInterval(async () => {
+      if (!hasActiveSteps(property.documents) && allStepsTerminal(property.documents)) {
+        clearInterval(interval);
+        return;
+      }
+      try {
+        const data = await propertyService.getProperty(id);
+        setProperty(data);
+        consecutiveFailuresRef.current = 0;
+        if (data.status === 'completed') {
+          await loadLineageAndScore();
+        }
+        if (allStepsTerminal(data.documents)) {
+          clearInterval(interval);
+        }
+      } catch (err: any) {
+        consecutiveFailuresRef.current += 1;
+        if (consecutiveFailuresRef.current >= 3) {
+          clearInterval(interval);
+          setError('Polling failed after 3 consecutive errors. Please refresh manually.');
+        }
+      }
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [id, property?.documents]);
 
   const loadProperty = async () => {
     if (!id) return;
@@ -207,7 +245,17 @@ const PropertyDetails: React.FC = () => {
                 )}
 
                 {tab === 1 && (
-                  <DocumentList propertyId={property.propertyId} />
+                  <Box>
+                    {property.documents && property.documents.length > 0 ? (
+                      property.documents.map(doc => (
+                        <Box key={doc.documentId} sx={{ mb: 3 }}>
+                          <DocumentPipelineProgress document={doc} />
+                        </Box>
+                      ))
+                    ) : (
+                      <Typography color="text.secondary">No documents uploaded yet.</Typography>
+                    )}
+                  </Box>
                 )}
 
                 {tab === 2 && lineage && (

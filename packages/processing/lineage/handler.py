@@ -214,14 +214,14 @@ def check_all_documents_analyzed(property_id: str) -> bool:
             logger.warning(f"No documents found for property {property_id}")
             return False
         
-        # Check if all documents have analysis_complete status
+        # Check if all documents have exactly analysis_complete status (Requirement 3.7)
         for doc in documents:
             status = doc.get('processingStatus', '')
-            if status not in ['analysis_complete', 'analysis_failed']:
-                logger.debug(f"Document {doc.get('documentId')} has status {status}")
+            if status != 'analysis_complete':
+                logger.debug(f"Document {doc.get('documentId')} has status {status}, skipping lineage")
                 return False
         
-        logger.info(f"All {len(documents)} documents analyzed for property {property_id}")
+        logger.info(f"All {len(documents)} documents are analysis_complete for property {property_id}")
         return True
         
     except Exception as e:
@@ -278,14 +278,14 @@ def construct_lineage_for_property(property_id: str) -> None:
         # Store lineage graph (Requirement 7.1)
         store_lineage_graph(property_id, graph_data)
         
-        # Update property status to "lineage_complete"
-        update_property_status(property_id, 'lineage_complete')
+        # Update all documents and property status to "lineage_complete" (Requirements 3.4, 3.6)
+        update_all_documents_status(property_id, 'lineage_complete')
         
         logger.info(f"Successfully constructed lineage for property {property_id}")
         
     except Exception as e:
         logger.error(f"Error constructing lineage for property {property_id}: {str(e)}", exc_info=True)
-        update_property_status(property_id, 'lineage_failed', str(e))
+        update_all_documents_status(property_id, 'lineage_failed', str(e))
         raise
 
 
@@ -1135,3 +1135,96 @@ def update_property_status(
     )
     
     logger.info(f"Property status updated successfully")
+
+
+def update_document_status(
+    document_id: str,
+    property_id: str,
+    status: str,
+    error_message: Optional[str] = None
+) -> None:
+    """
+    Update a single document's processingStatus in the Documents table.
+
+    Requirements: 3.4, 3.6
+
+    Args:
+        document_id: Document ID (partition key)
+        property_id: Property ID (sort key)
+        status: New processingStatus value
+        error_message: Optional error message
+    """
+    logger.info(f"Updating document {document_id} status to {status}")
+
+    documents_table = get_documents_table()
+
+    update_expression = "SET processingStatus = :status, updatedAt = :updated_at"
+    expression_values = {
+        ':status': status,
+        ':updated_at': datetime.now(timezone.utc).isoformat()
+    }
+
+    if error_message:
+        update_expression += ", errorMessage = :error_message"
+        expression_values[':error_message'] = error_message
+
+    documents_table.update_item(
+        Key={
+            'documentId': document_id,
+            'propertyId': property_id
+        },
+        UpdateExpression=update_expression,
+        ExpressionAttributeValues=expression_values
+    )
+
+    logger.info(f"Document {document_id} status updated to {status}")
+
+
+def update_all_documents_status(
+    property_id: str,
+    status: str,
+    error_message: Optional[str] = None
+) -> None:
+    """
+    Update processingStatus for all documents belonging to a property,
+    then update the property status for backward compatibility.
+
+    Requirements: 3.4, 3.6
+
+    Args:
+        property_id: Property ID
+        status: New processingStatus value for each document
+        error_message: Optional error message
+    """
+    logger.info(f"Updating all documents for property {property_id} to status {status}")
+
+    documents_table = get_documents_table()
+
+    try:
+        response = documents_table.query(
+            IndexName='propertyId-uploadedAt-index',
+            KeyConditionExpression='propertyId = :property_id',
+            ExpressionAttributeValues={
+                ':property_id': property_id
+            }
+        )
+        documents = response.get('Items', [])
+    except Exception as e:
+        logger.error(f"Error querying documents for property {property_id}: {str(e)}", exc_info=True)
+        documents = []
+
+    for doc in documents:
+        document_id = doc.get('documentId')
+        if document_id:
+            try:
+                update_document_status(document_id, property_id, status, error_message)
+            except Exception as e:
+                logger.error(
+                    f"Error updating document {document_id} to {status}: {str(e)}",
+                    exc_info=True
+                )
+
+    # Keep property-level status update for backward compatibility
+    update_property_status(property_id, status, error_message)
+
+    logger.info(f"Finished updating {len(documents)} documents for property {property_id} to {status}")

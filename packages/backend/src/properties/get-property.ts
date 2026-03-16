@@ -10,7 +10,20 @@ const docClient = DynamoDBDocumentClient.from(dynamoClient);
 const PROPERTIES_TABLE_NAME = process.env.PROPERTIES_TABLE_NAME || 'SatyaMool-Properties';
 const DOCUMENTS_TABLE_NAME = process.env.DOCUMENTS_TABLE_NAME || 'SatyaMool-Documents';
 
-interface PropertyDetails {
+// Feature: document-pipeline-status, Property 2: pipelineProgress is always structurally complete
+// Feature: document-pipeline-status, Property 3: processingStatus → pipelineProgress mapping is deterministic and idempotent
+export type PipelineStepStatus = 'pending' | 'in_progress' | 'complete' | 'failed';
+
+export interface PipelineProgress {
+  upload: PipelineStepStatus;
+  ocr: PipelineStepStatus;
+  translation: PipelineStepStatus;
+  analysis: PipelineStepStatus;
+  lineage: PipelineStepStatus;
+  scoring: PipelineStepStatus;
+}
+
+interface PropertyRecord {
   propertyId: string;
   userId: string;
   address?: string;
@@ -18,16 +31,9 @@ interface PropertyDetails {
   description?: string;
   status: string;
   trustScore: number | null;
-  documentCount: number;
+  documentCount?: number;
   createdAt: string;
   updatedAt: string;
-  processingStatus?: {
-    ocr: number;
-    translation: number;
-    analysis: number;
-    lineage: boolean;
-    scoring: boolean;
-  };
 }
 
 interface ErrorResponse {
@@ -36,9 +42,93 @@ interface ErrorResponse {
 }
 
 /**
+ * Maps a processingStatus string to a structured PipelineProgress object.
+ * Unknown statuses default to all-pending.
+ *
+ * Feature: document-pipeline-status, Property 3: processingStatus → pipelineProgress mapping is deterministic and idempotent
+ */
+export function mapToPipelineProgress(processingStatus: string): PipelineProgress {
+  const C: PipelineStepStatus = 'complete';
+  const P: PipelineStepStatus = 'pending';
+  const I: PipelineStepStatus = 'in_progress';
+  const F: PipelineStepStatus = 'failed';
+
+  switch (processingStatus) {
+    case 'pending':
+      return { upload: C, ocr: P, translation: P, analysis: P, lineage: P, scoring: P };
+    case 'ocr_processing':
+      return { upload: C, ocr: I, translation: P, analysis: P, lineage: P, scoring: P };
+    case 'ocr_complete':
+      return { upload: C, ocr: C, translation: P, analysis: P, lineage: P, scoring: P };
+    case 'ocr_failed':
+      return { upload: C, ocr: F, translation: P, analysis: P, lineage: P, scoring: P };
+    case 'translation_processing':
+      return { upload: C, ocr: C, translation: I, analysis: P, lineage: P, scoring: P };
+    case 'translation_complete':
+      return { upload: C, ocr: C, translation: C, analysis: P, lineage: P, scoring: P };
+    case 'translation_failed':
+      return { upload: C, ocr: C, translation: F, analysis: P, lineage: P, scoring: P };
+    case 'analysis_processing':
+      return { upload: C, ocr: C, translation: C, analysis: I, lineage: P, scoring: P };
+    case 'analysis_complete':
+      return { upload: C, ocr: C, translation: C, analysis: C, lineage: P, scoring: P };
+    case 'analysis_failed':
+      return { upload: C, ocr: C, translation: C, analysis: F, lineage: P, scoring: P };
+    case 'lineage_complete':
+      return { upload: C, ocr: C, translation: C, analysis: C, lineage: C, scoring: P };
+    case 'lineage_failed':
+      return { upload: C, ocr: C, translation: C, analysis: C, lineage: F, scoring: P };
+    case 'scoring_complete':
+      return { upload: C, ocr: C, translation: C, analysis: C, lineage: C, scoring: C };
+    case 'scoring_failed':
+      return { upload: C, ocr: C, translation: C, analysis: C, lineage: C, scoring: F };
+    default:
+      return { upload: P, ocr: P, translation: P, analysis: P, lineage: P, scoring: P };
+  }
+}
+
+const IN_PROGRESS_STATUSES = new Set([
+  'ocr_processing',
+  'translation_processing',
+  'analysis_processing',
+]);
+
+const FAILED_SUFFIX = '_failed';
+
+/**
+ * Derives the property-level status from the current document states.
+ *
+ * Feature: document-pipeline-status, Property 8: property status is derived from document states
+ */
+export function derivePropertyStatus(documents: any[]): string {
+  if (documents.length === 0) {
+    return 'pending';
+  }
+
+  const allScoringComplete = documents.every(
+    (d) => (d.processingStatus || 'pending') === 'scoring_complete'
+  );
+  if (allScoringComplete) {
+    return 'completed';
+  }
+
+  const anyFailed = documents.some((d) =>
+    (d.processingStatus || 'pending').endsWith(FAILED_SUFFIX)
+  );
+  const anyInProgress = documents.some((d) =>
+    IN_PROGRESS_STATUSES.has(d.processingStatus || 'pending')
+  );
+
+  if (anyFailed && !anyInProgress) {
+    return 'failed';
+  }
+
+  return 'processing';
+}
+
+/**
  * Lambda handler for getting property details
- * Retrieves property metadata, document count, and processing status
- * Implements authorization check (user owns property or is admin)
+ * Retrieves property metadata, document list with pipeline progress, and derived status
  */
 export const handler = async (
   event: APIGatewayProxyEvent
@@ -46,28 +136,26 @@ export const handler = async (
   console.log('Get property request received:', JSON.stringify(event, null, 2));
 
   try {
-    // Extract userId and role from authorizer context
-    // The authorizer puts userId and role in the context, not in claims
-    const userId = event.requestContext.authorizer?.userId || event.requestContext.authorizer?.claims?.sub;
-    const userRole = event.requestContext.authorizer?.role || event.requestContext.authorizer?.claims?.['custom:role'];
-    
+    const userId =
+      event.requestContext.authorizer?.userId ||
+      event.requestContext.authorizer?.claims?.sub;
+    const userRole =
+      event.requestContext.authorizer?.role ||
+      event.requestContext.authorizer?.claims?.['custom:role'];
+
     if (!userId) {
       return createErrorResponse(401, 'UNAUTHORIZED', 'User authentication required');
     }
 
-    // Extract propertyId from path parameters
     const propertyId = event.pathParameters?.propertyId;
-    
+
     if (!propertyId) {
       return createErrorResponse(400, 'MISSING_PROPERTY_ID', 'Property ID is required');
     }
 
-    // Get property using propertyId (partition key)
     const getCommand = new GetCommand({
       TableName: PROPERTIES_TABLE_NAME,
-      Key: {
-        propertyId: propertyId,
-      },
+      Key: { propertyId },
     });
 
     const result = await docClient.send(getCommand);
@@ -76,9 +164,8 @@ export const handler = async (
       return createErrorResponse(404, 'PROPERTY_NOT_FOUND', 'Property not found');
     }
 
-    const property = result.Item as PropertyDetails;
+    const property = result.Item as PropertyRecord;
 
-    // Authorization check: user owns property or is admin
     const isOwner = property.userId === userId;
     const isAdmin = userRole === 'Admin_User';
 
@@ -90,7 +177,6 @@ export const handler = async (
       );
     }
 
-    // Get document count and processing status
     const documentsQuery = new QueryCommand({
       TableName: DOCUMENTS_TABLE_NAME,
       IndexName: 'propertyId-uploadedAt-index',
@@ -101,16 +187,24 @@ export const handler = async (
     });
 
     const documentsResult = await docClient.send(documentsQuery);
-    const documents = documentsResult.Items || [];
+    const rawDocuments = documentsResult.Items || [];
 
-    // Calculate processing status
-    const processingStatus = calculateProcessingStatus(documents);
+    const documents = rawDocuments.map((doc) => ({
+      documentId: doc.documentId,
+      fileName: doc.fileName,
+      fileSize: doc.fileSize,
+      processingStatus: doc.processingStatus || 'pending',
+      uploadedAt: doc.uploadedAt,
+      pipelineProgress: mapToPipelineProgress(doc.processingStatus || 'pending'),
+    }));
 
-    // Update property with document count and processing status
-    const propertyDetails: PropertyDetails = {
+    const derivedStatus = derivePropertyStatus(rawDocuments);
+
+    const responseBody = {
       ...property,
-      documentCount: documents.length,
-      processingStatus,
+      status: derivedStatus,
+      documentCount: property.documentCount ?? 0,
+      documents,
     };
 
     console.log(`Retrieved property ${propertyId} for user ${userId}`);
@@ -122,12 +216,11 @@ export const handler = async (
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Credentials': true,
       },
-      body: JSON.stringify(propertyDetails),
+      body: JSON.stringify(responseBody),
     };
   } catch (error: any) {
     console.error('Get property error:', error);
 
-    // Generic error response
     return createErrorResponse(
       500,
       'INTERNAL_ERROR',
@@ -135,58 +228,6 @@ export const handler = async (
     );
   }
 };
-
-/**
- * Calculate processing status from documents
- */
-function calculateProcessingStatus(documents: any[]): {
-  ocr: number;
-  translation: number;
-  analysis: number;
-  lineage: boolean;
-  scoring: boolean;
-} {
-  if (documents.length === 0) {
-    return {
-      ocr: 0,
-      translation: 0,
-      analysis: 0,
-      lineage: false,
-      scoring: false,
-    };
-  }
-
-  let ocrComplete = 0;
-  let translationComplete = 0;
-  let analysisComplete = 0;
-
-  for (const doc of documents) {
-    const status = doc.processingStatus || 'pending';
-    
-    if (status === 'ocr_complete' || status === 'translation_complete' || status === 'analysis_complete') {
-      ocrComplete++;
-    }
-    
-    if (status === 'translation_complete' || status === 'analysis_complete') {
-      translationComplete++;
-    }
-    
-    if (status === 'analysis_complete') {
-      analysisComplete++;
-    }
-  }
-
-  const total = documents.length;
-  const allAnalysisComplete = analysisComplete === total;
-
-  return {
-    ocr: Math.round((ocrComplete / total) * 100),
-    translation: Math.round((translationComplete / total) * 100),
-    analysis: Math.round((analysisComplete / total) * 100),
-    lineage: allAnalysisComplete, // Lineage can only be constructed when all docs are analyzed
-    scoring: allAnalysisComplete, // Scoring can only be done when lineage is complete
-  };
-}
 
 /**
  * Create error response
@@ -202,7 +243,7 @@ function createErrorResponse(
   };
 
   return {
-    statusCode: statusCode,
+    statusCode,
     headers: {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',

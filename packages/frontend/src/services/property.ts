@@ -1,5 +1,25 @@
 import api from './api';
 
+export type PipelineStepStatus = 'pending' | 'in_progress' | 'complete' | 'failed';
+
+export interface PipelineProgress {
+  upload: PipelineStepStatus;
+  ocr: PipelineStepStatus;
+  translation: PipelineStepStatus;
+  analysis: PipelineStepStatus;
+  lineage: PipelineStepStatus;
+  scoring: PipelineStepStatus;
+}
+
+export interface DocumentWithPipeline {
+  documentId: string;
+  fileName: string;
+  fileSize: number;
+  processingStatus: string;
+  uploadedAt: string;
+  pipelineProgress: PipelineProgress;
+}
+
 export interface Property {
   propertyId: string;
   userId: string;
@@ -8,6 +28,7 @@ export interface Property {
   status: 'pending' | 'processing' | 'completed' | 'failed';
   trustScore?: number;
   documentCount: number;
+  documents?: DocumentWithPipeline[];
   createdAt: string;
   updatedAt: string;
   clientName?: string; // For Professional Users
@@ -257,6 +278,11 @@ class PropertyService {
   async getBulkUploadStatus(batchId: string): Promise<BulkUploadStatus> {
     const response = await api.get<BulkUploadStatus>(`/properties/bulk/${batchId}/status`);
     return response.data;
+  }
+
+  async getPipelineProgress(propertyId: string): Promise<DocumentWithPipeline[]> {
+    const property = await this.getProperty(propertyId);
+    return property.documents ?? [];
   }
 }
 

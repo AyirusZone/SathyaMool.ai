@@ -196,20 +196,29 @@ def calculate_trust_score_for_property(property_id: str, lineage_data: Dict[str,
     Calculate Trust Score for a property.
     
     This is the main orchestration function that:
-    1. Retrieves lineage graph and document metadata
-    2. Calculates base score
-    3. Applies penalties and bonuses
-    4. Clamps score to 0-100
-    5. Generates detailed breakdown
-    6. Stores results in TrustScores table
+    1. Guards: checks all documents are lineage_complete before proceeding
+    2. Retrieves lineage graph and document metadata
+    3. Calculates base score
+    4. Applies penalties and bonuses
+    5. Clamps score to 0-100
+    6. Generates detailed breakdown
+    7. Stores results in TrustScores table
+    8. Updates each document to scoring_complete and property to completed
     
-    Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.8, 8.9, 8.10
+    Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.8, 8.9, 8.10, 3.5, 3.6, 3.8, 4.1, 4.3
     
     Args:
         property_id: Property ID
         lineage_data: Lineage graph data
     """
     logger.info(f"Calculating Trust Score for property {property_id}")
+
+    # Guard: only proceed when all documents are lineage_complete (Requirement 3.8)
+    if not check_all_documents_lineage_complete(property_id):
+        logger.info(
+            f"Not all documents are lineage_complete for property {property_id}, skipping scoring"
+        )
+        return
     
     try:
         # Retrieve document metadata
@@ -301,13 +310,18 @@ def calculate_trust_score_for_property(property_id: str, lineage_data: Dict[str,
         # Store Trust Score
         store_trust_score(property_id, final_score, score_breakdown)
         
-        # Update property with Trust Score
+        # Update property with Trust Score (score only, status handled separately)
         update_property_trust_score(property_id, final_score)
+
+        # Update all documents to scoring_complete and set property to completed (Requirements 3.5, 4.1)
+        update_all_documents_status(property_id, 'scoring_complete')
         
         logger.info(f"Trust Score calculated successfully for property {property_id}: {final_score}")
         
     except Exception as e:
         logger.error(f"Error calculating Trust Score for property {property_id}: {str(e)}", exc_info=True)
+        # Update all documents to scoring_failed and set property to failed (Requirements 3.6, 4.3)
+        update_all_documents_status(property_id, 'scoring_failed', str(e))
         raise
 
 
@@ -746,7 +760,7 @@ def store_trust_score(property_id: str, score: int, breakdown: Dict[str, Any]) -
 
 def update_property_trust_score(property_id: str, score: int) -> None:
     """
-    Update property with Trust Score.
+    Update property with Trust Score (score only, status handled separately).
     
     Args:
         property_id: Property ID
@@ -758,15 +772,196 @@ def update_property_trust_score(property_id: str, score: int) -> None:
     
     properties_table.update_item(
         Key={'propertyId': property_id},
-        UpdateExpression="SET trustScore = :score, #status = :status, updatedAt = :updated_at",
+        UpdateExpression="SET trustScore = :score, updatedAt = :updated_at",
         ExpressionAttributeValues={
             ':score': score,
-            ':status': 'scoring_complete',
             ':updated_at': datetime.now(timezone.utc).isoformat()
-        },
-        ExpressionAttributeNames={
-            '#status': 'status'
         }
     )
     
     logger.info(f"Property Trust Score updated successfully")
+
+
+def update_property_status(
+    property_id: str,
+    status: str,
+    error_message: Optional[str] = None
+) -> None:
+    """
+    Update property status in Properties table.
+
+    Args:
+        property_id: Property ID
+        status: New status
+        error_message: Optional error message
+    """
+    logger.info(f"Updating property {property_id} status to {status}")
+
+    properties_table = get_properties_table()
+
+    update_expression = "SET #status = :status, updatedAt = :updated_at"
+    expression_values = {
+        ':status': status,
+        ':updated_at': datetime.now(timezone.utc).isoformat()
+    }
+    expression_names = {
+        '#status': 'status'
+    }
+
+    if error_message:
+        update_expression += ", errorMessage = :error_message"
+        expression_values[':error_message'] = error_message
+
+    properties_table.update_item(
+        Key={'propertyId': property_id},
+        UpdateExpression=update_expression,
+        ExpressionAttributeValues=expression_values,
+        ExpressionAttributeNames=expression_names
+    )
+
+    logger.info(f"Property status updated successfully")
+
+
+def update_document_status(
+    document_id: str,
+    property_id: str,
+    status: str,
+    error_message: Optional[str] = None
+) -> None:
+    """
+    Update a single document's processingStatus in the Documents table.
+
+    Requirements: 3.5, 3.6
+
+    Args:
+        document_id: Document ID (partition key)
+        property_id: Property ID (sort key)
+        status: New processingStatus value
+        error_message: Optional error message
+    """
+    logger.info(f"Updating document {document_id} status to {status}")
+
+    documents_table = get_documents_table()
+
+    update_expression = "SET processingStatus = :status, updatedAt = :updated_at"
+    expression_values = {
+        ':status': status,
+        ':updated_at': datetime.now(timezone.utc).isoformat()
+    }
+
+    if error_message:
+        update_expression += ", errorMessage = :error_message"
+        expression_values[':error_message'] = error_message
+
+    documents_table.update_item(
+        Key={
+            'documentId': document_id,
+            'propertyId': property_id
+        },
+        UpdateExpression=update_expression,
+        ExpressionAttributeValues=expression_values
+    )
+
+    logger.info(f"Document {document_id} status updated to {status}")
+
+
+def update_all_documents_status(
+    property_id: str,
+    status: str,
+    error_message: Optional[str] = None
+) -> None:
+    """
+    Update processingStatus for all documents belonging to a property,
+    then update the property status.
+
+    Requirements: 3.5, 3.6, 4.1, 4.3
+
+    Args:
+        property_id: Property ID
+        status: New processingStatus value for each document
+        error_message: Optional error message
+    """
+    logger.info(f"Updating all documents for property {property_id} to status {status}")
+
+    documents_table = get_documents_table()
+
+    try:
+        response = documents_table.query(
+            IndexName='propertyId-uploadedAt-index',
+            KeyConditionExpression='propertyId = :property_id',
+            ExpressionAttributeValues={
+                ':property_id': property_id
+            }
+        )
+        documents = response.get('Items', [])
+    except Exception as e:
+        logger.error(f"Error querying documents for property {property_id}: {str(e)}", exc_info=True)
+        documents = []
+
+    any_failed = False
+    for doc in documents:
+        document_id = doc.get('documentId')
+        if document_id:
+            try:
+                update_document_status(document_id, property_id, status, error_message)
+            except Exception as e:
+                logger.error(
+                    f"Error updating document {document_id} to {status}: {str(e)}",
+                    exc_info=True
+                )
+                any_failed = True
+
+    # Determine property-level status
+    if status == 'scoring_complete' and not any_failed:
+        property_status = 'completed'
+    elif status == 'scoring_failed' or any_failed:
+        property_status = 'failed'
+    else:
+        property_status = status
+
+    update_property_status(property_id, property_status, error_message)
+
+    logger.info(f"Finished updating {len(documents)} documents for property {property_id} to {status}")
+
+
+def check_all_documents_lineage_complete(property_id: str) -> bool:
+    """
+    Check if all documents for a property have processingStatus == 'lineage_complete'.
+
+    Requirements: 3.8
+
+    Args:
+        property_id: Property ID
+
+    Returns:
+        True if all documents are lineage_complete, False otherwise
+    """
+    documents_table = get_documents_table()
+
+    try:
+        response = documents_table.query(
+            IndexName='propertyId-uploadedAt-index',
+            KeyConditionExpression='propertyId = :property_id',
+            ExpressionAttributeValues={
+                ':property_id': property_id
+            }
+        )
+        documents = response.get('Items', [])
+    except Exception as e:
+        logger.error(f"Error querying documents for property {property_id}: {str(e)}", exc_info=True)
+        return False
+
+    if not documents:
+        logger.warning(f"No documents found for property {property_id}")
+        return False
+
+    for doc in documents:
+        status = doc.get('processingStatus', '')
+        if status != 'lineage_complete':
+            logger.debug(
+                f"Document {doc.get('documentId')} has status {status}, not lineage_complete"
+            )
+            return False
+
+    logger.info(f"All {len(documents)} documents are lineage_complete for property {property_id}")
+    return True

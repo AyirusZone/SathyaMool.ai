@@ -79,16 +79,32 @@ const Layout: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <AppBar position="static">
+      <AppBar position="static" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', color: 'text.primary' }}>
         <Toolbar>
-          <Typography
-            variant="h6"
-            component="div"
-            sx={{ flexGrow: 1, cursor: 'pointer' }}
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1, cursor: 'pointer' }}
             onClick={() => navigate('/dashboard')}
           >
-            SatyaMool
-          </Typography>
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: 1.5,
+                bgcolor: 'primary.main',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Typography variant="body2" fontWeight={800} color="white" sx={{ fontSize: 14 }}>S</Typography>
+            </Box>
+            <Typography variant="h6" fontWeight={700} color="text.primary">
+              SatyaMool
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ ml: 0.5, mt: 0.5 }}>
+              Property Intelligence
+            </Typography>
+          </Box>
 
           {user?.role === 'Admin_User' && (
             <IconButton
@@ -169,7 +185,7 @@ const Layout: React.FC = () => {
         </Toolbar>
       </AppBar>
 
-      <Box component="main" sx={{ flexGrow: 1, p: 3, bgcolor: 'background.default' }}>
+      <Box component="main" sx={{ flexGrow: 1, p: 3, bgcolor: '#f8f9fb' }}>
         <Outlet />
       </Box>
     </Box>

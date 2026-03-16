@@ -61,6 +61,8 @@ export interface LineageNode {
     date?: string;
     verified: boolean;
     isCurrentOwner?: boolean;
+    verificationStatus?: 'verified' | 'gap' | 'warning';
+    isGapNode?: boolean;
   };
   position: { x: number; y: number };
   type: string;
@@ -74,13 +76,32 @@ export interface LineageEdge {
     transferType: string;
     date: string;
     documentId: string;
+    isGap?: boolean;
   };
   type: string;
+}
+
+export interface LineageGap {
+  type: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  owners?: string[];
+  years?: number;
 }
 
 export interface LineageGraph {
   nodes: LineageNode[];
   edges: LineageEdge[];
+  metadata?: {
+    motherDeed?: { owner_name?: string; identification_method?: string; warning?: string };
+    gaps: LineageGap[];
+    ownershipPaths: any[];
+    circularPatterns: any[];
+    nodeCount: number;
+    edgeCount: number;
+    gapCount: number;
+    documentsWithoutExtraction?: number;
+  };
 }
 
 export interface TrustScore {

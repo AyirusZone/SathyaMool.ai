@@ -214,14 +214,26 @@ def check_all_documents_analyzed(property_id: str) -> bool:
             logger.warning(f"No documents found for property {property_id}")
             return False
         
-        # Check if all documents have exactly analysis_complete status (Requirement 3.7)
-        for doc in documents:
+        # Check if all non-failed documents have analysis_complete status (Requirement 3.7)
+        # Documents with *_failed status are permanently failed and should not block the pipeline
+        TERMINAL_FAILED_STATUSES = {'ocr_failed', 'translation_failed', 'analysis_failed'}
+        eligible_docs = [doc for doc in documents if doc.get('processingStatus') not in TERMINAL_FAILED_STATUSES]
+        
+        if not eligible_docs:
+            logger.warning(f"All documents for property {property_id} are in failed states, skipping lineage")
+            return False
+        
+        for doc in eligible_docs:
             status = doc.get('processingStatus', '')
             if status != 'analysis_complete':
                 logger.debug(f"Document {doc.get('documentId')} has status {status}, skipping lineage")
                 return False
         
-        logger.info(f"All {len(documents)} documents are analysis_complete for property {property_id}")
+        failed_count = len(documents) - len(eligible_docs)
+        if failed_count > 0:
+            logger.warning(f"Proceeding with lineage for property {property_id}: {len(eligible_docs)} analysis_complete, {failed_count} permanently failed (skipped)")
+        else:
+            logger.info(f"All {len(documents)} documents are analysis_complete for property {property_id}")
         return True
         
     except Exception as e:
@@ -1216,6 +1228,12 @@ def update_all_documents_status(
     for doc in documents:
         document_id = doc.get('documentId')
         if document_id:
+            # Skip permanently failed documents — don't overwrite their failed status
+            TERMINAL_FAILED_STATUSES = {'ocr_failed', 'translation_failed', 'analysis_failed'}
+            current_status = doc.get('processingStatus', '')
+            if current_status in TERMINAL_FAILED_STATUSES and not status.endswith('_failed'):
+                logger.debug(f"Skipping status update for permanently failed document {document_id} ({current_status})")
+                continue
             try:
                 update_document_status(document_id, property_id, status, error_message)
             except Exception as e:

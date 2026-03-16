@@ -1114,13 +1114,15 @@ def store_translation_results(
             updatedAt = :updated_at
     """
     
-    expression_values = {
+    # Convert ALL floats to Decimal before storing (DynamoDB doesn't support float)
+    safe_metadata = convert_floats_to_decimal(metadata)
+    expression_values = convert_floats_to_decimal({
         ':translated_text': translated_text,
-        ':translation_metadata': convert_floats_to_decimal(metadata),
+        ':translation_metadata': safe_metadata,
         ':confidence_score': Decimal(str(confidence_score)),
         ':needs_review': needs_manual_review,
         ':updated_at': datetime.utcnow().isoformat()
-    }
+    })
     
     # Update document in DynamoDB
     documents_table.update_item(

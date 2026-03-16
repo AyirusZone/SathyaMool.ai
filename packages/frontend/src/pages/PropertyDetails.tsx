@@ -104,7 +104,10 @@ const PropertyDetails: React.FC = () => {
       if (data.status === 'completed') {
         await loadLineageAndScore();
       }
-    } catch (err: any) {
+      // Always try to load lineage (shows partial/empty state with gap info)
+      if (!lineage) {
+        loadLineageAndScore().catch(() => {});
+      }    } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load property');
     } finally {
       setLoading(false);
@@ -232,7 +235,7 @@ const PropertyDetails: React.FC = () => {
               <Tabs value={tab} onChange={(_, v) => setTab(v)}>
                 <Tab label="Upload Documents" />
                 <Tab label="Documents" />
-                {property.status === 'completed' && <Tab label="Lineage Graph" />}
+                <Tab label="Lineage Graph" />
                 {property.status === 'completed' && <Tab label="Trust Score" />}
               </Tabs>
 
@@ -259,7 +262,19 @@ const PropertyDetails: React.FC = () => {
                 )}
 
                 {tab === 2 && lineage && (
-                  <LineageGraph nodes={lineage.nodes} edges={lineage.edges} />
+                  <LineageGraph nodes={lineage.nodes} edges={lineage.edges} metadata={lineage.metadata} />
+                )}
+
+                {tab === 2 && !lineage && (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+                    {property.status === 'completed' ? (
+                      <CircularProgress />
+                    ) : (
+                      <Typography color="text.secondary">
+                        Lineage graph will be available once processing completes.
+                      </Typography>
+                    )}
+                  </Box>
                 )}
 
                 {tab === 3 && trustScore && (

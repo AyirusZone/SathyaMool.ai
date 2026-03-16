@@ -419,7 +419,7 @@ def calculate_inconsistency_penalty(documents: List[Dict[str, Any]]) -> tuple[in
     # Extract transaction dates
     transactions = []
     for doc in documents:
-        extracted_data = doc.get('extractedData', {})
+        extracted_data = doc.get('extractedData') or {}
         transaction_date = extracted_data.get('transaction_date') or extracted_data.get('grant_date')
         
         if transaction_date:
@@ -480,7 +480,7 @@ def calculate_survey_number_penalty(documents: List[Dict[str, Any]]) -> tuple[in
     survey_numbers = set()
     
     for doc in documents:
-        extracted_data = doc.get('extractedData', {})
+        extracted_data = doc.get('extractedData') or {}
         doc_survey_numbers = extracted_data.get('survey_numbers', [])
         
         if doc_survey_numbers:
@@ -516,19 +516,19 @@ def calculate_ec_bonus(documents: List[Dict[str, Any]]) -> tuple[int, str]:
         Tuple of (bonus, explanation)
     """
     # Find Encumbrance Certificate
-    ec_docs = [doc for doc in documents if doc.get('extractedData', {}).get('document_type') == 'encumbrance_certificate']
+    ec_docs = [doc for doc in documents if (doc.get('extractedData') or {}).get('document_type') == 'encumbrance_certificate']
     
     if not ec_docs:
         return (0, "No Encumbrance Certificate provided")
     
     # Find Sale Deeds
-    sale_deeds = [doc for doc in documents if doc.get('extractedData', {}).get('document_type') == 'sale_deed']
+    sale_deeds = [doc for doc in documents if (doc.get('extractedData') or {}).get('document_type') == 'sale_deed']
     
     if not sale_deeds:
         return (0, "Encumbrance Certificate provided but no Sale Deeds to verify against")
     
     # Check if EC data matches Sale Deed data
-    ec_data = ec_docs[0].get('extractedData', {})
+    ec_data = (ec_docs[0].get('extractedData') or {})
     ec_transactions = ec_data.get('transaction_entries', [])
     
     if not ec_transactions:
@@ -538,7 +538,7 @@ def calculate_ec_bonus(documents: List[Dict[str, Any]]) -> tuple[int, str]:
     # In a real implementation, we would cross-verify dates, parties, and amounts
     matches = 0
     for sale_deed in sale_deeds:
-        sale_data = sale_deed.get('extractedData', {})
+        sale_data = (sale_deed.get('extractedData') or {})
         sale_date = sale_data.get('transaction_date')
         
         for ec_trans in ec_transactions:
@@ -573,7 +573,7 @@ def calculate_recency_bonus(documents: List[Dict[str, Any]]) -> tuple[int, str]:
     oldest_date = None
     
     for doc in documents:
-        extracted_data = doc.get('extractedData', {})
+        extracted_data = doc.get('extractedData') or {}
         transaction_date = extracted_data.get('transaction_date') or extracted_data.get('grant_date')
         
         if transaction_date:
@@ -614,7 +614,7 @@ def calculate_succession_bonus(documents: List[Dict[str, Any]]) -> tuple[int, st
     succession_indicators = []
     
     for doc in documents:
-        extracted_data = doc.get('extractedData', {})
+        extracted_data = doc.get('extractedData') or {}
         family_relationships = extracted_data.get('family_relationships', [])
         
         # Check for legal heir indicators
@@ -899,9 +899,15 @@ def update_all_documents_status(
         documents = []
 
     any_failed = False
+    TERMINAL_FAILED_STATUSES = {'ocr_failed', 'translation_failed', 'analysis_failed', 'lineage_failed'}
     for doc in documents:
         document_id = doc.get('documentId')
         if document_id:
+            # Skip permanently failed documents — don't overwrite their failed status
+            current_status = doc.get('processingStatus', '')
+            if current_status in TERMINAL_FAILED_STATUSES and not status.endswith('_failed'):
+                logger.debug(f"Skipping status update for permanently failed document {document_id} ({current_status})")
+                continue
             try:
                 update_document_status(document_id, property_id, status, error_message)
             except Exception as e:
@@ -958,10 +964,25 @@ def check_all_documents_lineage_complete(property_id: str) -> bool:
     for doc in documents:
         status = doc.get('processingStatus', '')
         if status != 'lineage_complete':
+            # Skip permanently failed documents — they should not block the pipeline
+            TERMINAL_FAILED_STATUSES = {'ocr_failed', 'translation_failed', 'analysis_failed', 'lineage_failed'}
+            if status in TERMINAL_FAILED_STATUSES:
+                logger.debug(
+                    f"Document {doc.get('documentId')} is permanently failed ({status}), skipping in guard check"
+                )
+                continue
             logger.debug(
                 f"Document {doc.get('documentId')} has status {status}, not lineage_complete"
             )
             return False
 
-    logger.info(f"All {len(documents)} documents are lineage_complete for property {property_id}")
+    eligible = [d for d in documents if d.get('processingStatus') not in {'ocr_failed', 'translation_failed', 'analysis_failed', 'lineage_failed'}]
+    if not eligible:
+        logger.warning(f"All documents for property {property_id} are in failed states, skipping scoring")
+        return False
+
+    logger.info(f"All eligible documents are lineage_complete for property {property_id} ({len(documents)} total, {len(documents)-len(eligible)} permanently failed)")
     return True
+
+
+

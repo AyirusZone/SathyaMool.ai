@@ -80,7 +80,7 @@ const handler = async (event) => {
             documentMap.set(doc.documentId, doc);
         });
         // Transform to React Flow format
-        const reactFlowGraph = transformToReactFlow(lineageData, documentMap);
+        const reactFlowGraph = transformToReactFlow(lineageData, documentMap, documents);
         // Log data access event
         await (0, audit_1.createAuditLog)({
             userId: userId,
@@ -115,7 +115,7 @@ exports.handler = handler;
 /**
  * Transform lineage data to React Flow compatible format
  */
-function transformToReactFlow(lineageData, documentMap) {
+function transformToReactFlow(lineageData, documentMap, documents) {
     const nodes = [];
     const edges = [];
     // Transform nodes
@@ -181,6 +181,7 @@ function transformToReactFlow(lineageData, documentMap) {
         nodeCount: nodes.length,
         edgeCount: edges.length,
         gapCount: (lineageData.gaps || []).length,
+        documentsWithoutExtraction: documents.filter((d) => !d.extractedData || d.extractedData?.bedrock_skipped === true).length,
     };
     return {
         nodes,

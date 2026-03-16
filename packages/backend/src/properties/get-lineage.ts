@@ -164,7 +164,7 @@ export const handler = async (
     });
 
     // Transform to React Flow format
-    const reactFlowGraph = transformToReactFlow(lineageData, documentMap);
+    const reactFlowGraph = transformToReactFlow(lineageData, documentMap, documents);
 
     // Log data access event
     await createAuditLog({
@@ -206,7 +206,7 @@ export const handler = async (
 /**
  * Transform lineage data to React Flow compatible format
  */
-function transformToReactFlow(lineageData: any, documentMap: Map<string, any>): ReactFlowGraph {
+function transformToReactFlow(lineageData: any, documentMap: Map<string, any>, documents: any[]): ReactFlowGraph {
   const nodes: Node[] = [];
   const edges: Edge[] = [];
 
@@ -278,6 +278,9 @@ function transformToReactFlow(lineageData: any, documentMap: Map<string, any>): 
     nodeCount: nodes.length,
     edgeCount: edges.length,
     gapCount: (lineageData.gaps || []).length,
+    documentsWithoutExtraction: documents.filter(
+      (d: any) => !d.extractedData || d.extractedData?.bedrock_skipped === true
+    ).length,
   };
 
   return {

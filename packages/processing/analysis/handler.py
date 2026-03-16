@@ -37,8 +37,9 @@ DOCUMENTS_TABLE_NAME = os.environ.get('DOCUMENTS_TABLE_NAME', 'SatyaMool-Documen
 # Use on-demand inference for cost optimization (as per design doc)
 # On-demand saves ~95% during development vs provisioned throughput
 # Switch to provisioned throughput only when consistent high volume (>1M tokens/day)
-# Using Claude 3 Sonnet as Claude 3.5 Sonnet v2 requires model access approval
-BEDROCK_MODEL_ID = 'anthropic.claude-3-sonnet-20240229-v1:0'
+# Using Claude 3.5 Sonnet v2 - requires model access to be enabled in AWS Bedrock console
+# To enable: AWS Console → Bedrock → Model access → Enable anthropic.claude-3-5-sonnet-20241022-v2:0
+BEDROCK_MODEL_ID = 'anthropic.claude-3-5-sonnet-20241022-v2:0'
 BEDROCK_INFERENCE_MODE = 'on-demand'  # 'on-demand' or 'provisioned'
 
 # Bedrock request configuration for optimal performance
@@ -231,15 +232,27 @@ def process_analysis(document_data: Dict[str, Any]) -> None:
         logger.info(f"Detected document type: {document_type}")
         
         # Extract structured data based on document type
-        if document_type == 'sale_deed':
-            extracted_data = extract_sale_deed_data(translated_text, document_id)
-        elif document_type == 'mother_deed':
-            extracted_data = extract_mother_deed_data(translated_text, document_id)
-        elif document_type == 'encumbrance_certificate':
-            extracted_data = extract_encumbrance_certificate_data(translated_text, document_id)
-        else:
-            logger.warning(f"Unknown document type: {document_type}")
-            extracted_data = extract_generic_document_data(translated_text, document_id)
+        try:
+            if document_type == 'sale_deed':
+                extracted_data = extract_sale_deed_data(translated_text, document_id)
+            elif document_type == 'mother_deed':
+                extracted_data = extract_mother_deed_data(translated_text, document_id)
+            elif document_type == 'encumbrance_certificate':
+                extracted_data = extract_encumbrance_certificate_data(translated_text, document_id)
+            else:
+                logger.warning(f"Unknown document type: {document_type}")
+                extracted_data = extract_generic_document_data(translated_text, document_id)
+        except ClientError as bedrock_err:
+            error_code = bedrock_err.response.get('Error', {}).get('Code', 'Unknown')
+            if error_code == 'ValidationException' and 'Operation not allowed' in str(bedrock_err):
+                # Bedrock model access not enabled — proceed without extraction
+                logger.warning(
+                    f"Bedrock model access not enabled for document {document_id}. "
+                    f"Proceeding without AI extraction. Enable model access in AWS Bedrock console."
+                )
+                extracted_data = {'document_type': document_type, 'bedrock_skipped': True}
+            else:
+                raise
         
         # Add document type to extracted data
         extracted_data['document_type'] = document_type

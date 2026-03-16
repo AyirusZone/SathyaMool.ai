@@ -177,17 +177,22 @@ export const handler = async (
       );
     }
 
-    const documentsQuery = new QueryCommand({
-      TableName: DOCUMENTS_TABLE_NAME,
-      IndexName: 'propertyId-uploadedAt-index',
-      KeyConditionExpression: 'propertyId = :propertyId',
-      ExpressionAttributeValues: {
-        ':propertyId': propertyId,
-      },
-    });
-
-    const documentsResult = await docClient.send(documentsQuery);
-    const rawDocuments = documentsResult.Items || [];
+    const rawDocuments: any[] = [];
+    let lastEvaluatedKey: Record<string, any> | undefined = undefined;
+    do {
+      const documentsQuery: QueryCommand = new QueryCommand({
+        TableName: DOCUMENTS_TABLE_NAME,
+        IndexName: 'propertyId-uploadedAt-index',
+        KeyConditionExpression: 'propertyId = :propertyId',
+        ExpressionAttributeValues: {
+          ':propertyId': propertyId,
+        },
+        ExclusiveStartKey: lastEvaluatedKey,
+      });
+      const documentsResult = await docClient.send(documentsQuery) as any;
+      rawDocuments.push(...(documentsResult.Items || []));
+      lastEvaluatedKey = documentsResult.LastEvaluatedKey;
+    } while (lastEvaluatedKey);
 
     const documents = rawDocuments.map((doc) => ({
       documentId: doc.documentId,

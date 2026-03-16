@@ -15,52 +15,79 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableContainer,
+  ToggleButtonGroup,
+  ToggleButton,
+  Tooltip,
+  Chip,
 } from '@mui/material';
 import {
   Download as DownloadIcon,
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
+  CheckCircle as CheckCircleIcon,
+  Error as ErrorIcon,
+  RadioButtonUnchecked as PendingIcon,
+  HourglassEmpty as InProgressIcon,
 } from '@mui/icons-material';
-import propertyService, { Property, LineageGraph as LineageGraphType, TrustScore, DocumentWithPipeline } from '../services/property';
+import propertyService, { Property, LineageGraph as LineageGraphType, TrustScore, DocumentWithPipeline, PipelineStepStatus } from '../services/property';
 import ProcessingStatus from '../components/ProcessingStatus';
 import DocumentUpload from '../components/DocumentUpload';
 import LineageGraph from '../components/LineageGraph';
 import TrustScoreBreakdown from '../components/TrustScoreBreakdown';
-import DocumentPipelineProgress from '../components/DocumentPipelineProgress';
+
+const PIPELINE_STEPS: (keyof DocumentWithPipeline['pipelineProgress'])[] = [
+  'upload', 'ocr', 'translation', 'analysis', 'lineage', 'scoring',
+];
 
 const STEP_LABELS: Record<string, string> = {
-  upload: 'Upload',
-  ocr: 'OCR',
-  translation: 'Translation',
-  analysis: 'Analysis',
-  lineage: 'Lineage',
-  scoring: 'Scoring',
+  upload: 'Upload', ocr: 'OCR', translation: 'Translation',
+  analysis: 'Analysis', lineage: 'Lineage', scoring: 'Scoring',
 };
 
-interface FailureEntry {
-  fileName: string;
-  failedSteps: string[];
+type FilterStatus = 'all' | 'success' | 'failed' | 'in_progress' | 'pending';
+
+const StepChip: React.FC<{ status: PipelineStepStatus }> = ({ status }) => {
+  const map: Record<PipelineStepStatus, { icon: React.ReactElement; color: 'success' | 'error' | 'warning' | 'default'; label: string }> = {
+    complete:    { icon: <CheckCircleIcon fontSize="small" />, color: 'success', label: 'Done' },
+    failed:      { icon: <ErrorIcon fontSize="small" />,       color: 'error',   label: 'Failed' },
+    in_progress: { icon: <InProgressIcon fontSize="small" />,  color: 'warning', label: 'Running' },
+    pending:     { icon: <PendingIcon fontSize="small" />,     color: 'default', label: 'Pending' },
+  };
+  const { icon, color, label } = map[status] ?? map.pending;
+  return <Chip icon={icon} label={label} color={color} size="small" variant="outlined" />;
+};
+
+/** Derive an overall doc status for filtering */
+function docOverallStatus(doc: DocumentWithPipeline): FilterStatus {
+  const vals = Object.values(doc.pipelineProgress);
+  if (vals.some(s => s === 'failed')) return 'failed';
+  if (vals.some(s => s === 'in_progress')) return 'in_progress';
+  if (vals.every(s => s === 'complete')) return 'success';
+  return 'pending';
 }
+
+interface FailureEntry { fileName: string; failedSteps: string[]; }
 
 const PipelineFailureSummary: React.FC<{ documents: DocumentWithPipeline[] }> = ({ documents }) => {
   const failures: FailureEntry[] = documents
     .map(doc => ({
       fileName: doc.fileName,
       failedSteps: Object.entries(doc.pipelineProgress)
-        .filter(([, status]) => status === 'failed')
+        .filter(([, s]) => s === 'failed')
         .map(([step]) => STEP_LABELS[step] || step),
     }))
-    .filter(entry => entry.failedSteps.length > 0);
+    .filter(e => e.failedSteps.length > 0);
 
   if (failures.length === 0) return null;
-
   return (
-    <Alert
-      severity="error"
-      sx={{ mb: 3 }}
-      icon={false}
-    >
-      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+    <Alert severity="error" sx={{ mb: 2 }} icon={false}>
+      <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
         {failures.length} document{failures.length > 1 ? 's' : ''} failed processing
       </Typography>
       {failures.map(({ fileName, failedSteps }) => (
@@ -83,6 +110,7 @@ const PropertyDetails: React.FC = () => {
   const [tab, setTab] = useState(0);
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [docFilter, setDocFilter] = useState<FilterStatus>('all');
   const consecutiveFailuresRef = useRef(0);
 
   const hasActiveSteps = (documents: DocumentWithPipeline[] | undefined): boolean => {
@@ -296,11 +324,93 @@ const PropertyDetails: React.FC = () => {
                     {property.documents && property.documents.length > 0 ? (
                       <>
                         <PipelineFailureSummary documents={property.documents} />
-                        {property.documents.map(doc => (
-                          <Box key={doc.documentId} sx={{ mb: 3 }}>
-                            <DocumentPipelineProgress document={doc} />
-                          </Box>
-                        ))}
+
+                        {/* Filter bar */}
+                        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Typography variant="body2" color="text.secondary">Filter:</Typography>
+                          <ToggleButtonGroup
+                            value={docFilter}
+                            exclusive
+                            onChange={(_, v) => v && setDocFilter(v)}
+                            size="small"
+                          >
+                            <ToggleButton value="all">All ({property.documents.length})</ToggleButton>
+                            <ToggleButton value="success">
+                              Success ({property.documents.filter(d => docOverallStatus(d) === 'success').length})
+                            </ToggleButton>
+                            <ToggleButton value="failed">
+                              Failed ({property.documents.filter(d => docOverallStatus(d) === 'failed').length})
+                            </ToggleButton>
+                            <ToggleButton value="in_progress">
+                              In Progress ({property.documents.filter(d => docOverallStatus(d) === 'in_progress').length})
+                            </ToggleButton>
+                            <ToggleButton value="pending">
+                              Pending ({property.documents.filter(d => docOverallStatus(d) === 'pending').length})
+                            </ToggleButton>
+                          </ToggleButtonGroup>
+                        </Box>
+
+                        {/* Table */}
+                        <TableContainer component={Paper} variant="outlined">
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow sx={{ bgcolor: 'grey.50' }}>
+                                <TableCell sx={{ fontWeight: 600 }}>File Name</TableCell>
+                                {PIPELINE_STEPS.map(step => (
+                                  <TableCell key={step} align="center" sx={{ fontWeight: 600 }}>
+                                    {STEP_LABELS[step]}
+                                  </TableCell>
+                                ))}
+                                <TableCell align="center" sx={{ fontWeight: 600 }}>Overall</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {property.documents
+                                .filter(doc => docFilter === 'all' || docOverallStatus(doc) === docFilter)
+                                .map(doc => {
+                                  const overall = docOverallStatus(doc);
+                                  return (
+                                    <TableRow key={doc.documentId} hover>
+                                      <TableCell>
+                                        <Tooltip title={doc.fileName}>
+                                          <Typography
+                                            variant="body2"
+                                            sx={{
+                                              maxWidth: 220,
+                                              overflow: 'hidden',
+                                              textOverflow: 'ellipsis',
+                                              whiteSpace: 'nowrap',
+                                            }}
+                                          >
+                                            {doc.fileName}
+                                          </Typography>
+                                        </Tooltip>
+                                      </TableCell>
+                                      {PIPELINE_STEPS.map(step => (
+                                        <TableCell key={step} align="center">
+                                          <StepChip status={doc.pipelineProgress[step]} />
+                                        </TableCell>
+                                      ))}
+                                      <TableCell align="center">
+                                        <Chip
+                                          label={overall === 'success' ? 'Complete' : overall === 'failed' ? 'Failed' : overall === 'in_progress' ? 'Running' : 'Pending'}
+                                          color={overall === 'success' ? 'success' : overall === 'failed' ? 'error' : overall === 'in_progress' ? 'warning' : 'default'}
+                                          size="small"
+                                        />
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })}
+                              {property.documents.filter(doc => docFilter === 'all' || docOverallStatus(doc) === docFilter).length === 0 && (
+                                <TableRow>
+                                  <TableCell colSpan={PIPELINE_STEPS.length + 2} align="center" sx={{ py: 4 }}>
+                                    <Typography color="text.secondary">No documents match this filter.</Typography>
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
                       </>
                     ) : (
                       <Typography color="text.secondary">No documents uploaded yet.</Typography>

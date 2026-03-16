@@ -14,6 +14,7 @@ export interface PropertyLambdasProps {
   auditLogsTable: dynamodb.ITable;
   idempotencyTable: dynamodb.ITable;
   documentBucket: s3.IBucket;
+  reportsBucket: s3.IBucket;
   processingQueue: sqs.IQueue;
   nodeLayer?: lambda.ILayerVersion;
 }
@@ -134,6 +135,10 @@ export class PropertyLambdas extends Construct {
       timeout: cdk.Duration.seconds(60),
       code: lambda.Code.fromAsset(path.join(__dirname, '../../backend/dist')),
       handler: 'properties/generate-report.handler',
+      environment: {
+        ...commonEnv,
+        REPORTS_BUCKET_NAME: props.reportsBucket.bucketName,
+      },
     });
 
     // Grant permissions
@@ -160,5 +165,8 @@ export class PropertyLambdas extends Construct {
       props.documentBucket.grantReadWrite(fn);
       props.processingQueue.grantSendMessages(fn);
     });
+
+    // Grant report Lambda access to reports bucket
+    props.reportsBucket.grantReadWrite(this.generateReportLambda);
   }
 }

@@ -107,6 +107,21 @@ export class SatyaMoolStack extends cdk.Stack {
       }
     );
 
+    // Create S3 bucket for generated PDF reports (7-day lifecycle)
+    const reportsBucket = new s3.Bucket(this, 'ReportsBucket', {
+      bucketName: `satyamool-reports-${this.account}`,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      lifecycleRules: [
+        {
+          id: 'DeleteOldReports',
+          enabled: true,
+          expiration: cdk.Duration.days(7),
+        },
+      ],
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
     // Create S3 bucket for audit logs with simplified configuration
     const auditLogBucket = new s3.Bucket(this, 'AuditLogBucket', {
       bucketName: `satyamool-audit-logs-${this.account}`,
@@ -929,6 +944,7 @@ export class SatyaMoolStack extends cdk.Stack {
       auditLogsTable: auditLogsTable,
       idempotencyTable: idempotencyTable,
       documentBucket: documentBucket,
+      reportsBucket: reportsBucket,
       processingQueue: processingQueue,
       nodeLayer: layers.nodejsCommonLayer,
     });

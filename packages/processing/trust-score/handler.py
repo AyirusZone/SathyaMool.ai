@@ -335,20 +335,8 @@ def retrieve_property_documents(property_id: str) -> List[Dict[str, Any]]:
     Returns:
         List of document data
     """
-    documents_table = get_documents_table()
-    
-    response = documents_table.query(
-        IndexName='propertyId-uploadedAt-index',
-        KeyConditionExpression='propertyId = :property_id',
-        ExpressionAttributeValues={
-            ':property_id': property_id
-        }
-    )
-    
-    documents = response.get('Items', [])
-    
+    documents = query_all_documents_for_property(property_id)
     logger.info(f"Retrieved {len(documents)} documents for property {property_id}")
-    
     return documents
 
 
@@ -883,30 +871,21 @@ def update_all_documents_status(
     """
     logger.info(f"Updating all documents for property {property_id} to status {status}")
 
-    documents_table = get_documents_table()
-
     try:
-        response = documents_table.query(
-            IndexName='propertyId-uploadedAt-index',
-            KeyConditionExpression='propertyId = :property_id',
-            ExpressionAttributeValues={
-                ':property_id': property_id
-            }
-        )
-        documents = response.get('Items', [])
+        documents = query_all_documents_for_property(property_id)
     except Exception as e:
         logger.error(f"Error querying documents for property {property_id}: {str(e)}", exc_info=True)
         documents = []
 
     any_failed = False
-    TERMINAL_FAILED_STATUSES = {'ocr_failed', 'translation_failed', 'analysis_failed', 'lineage_failed'}
+    SKIP_STATUSES = {'ocr_failed', 'translation_failed', 'analysis_failed', 'lineage_failed',
+                     'ocr_processing', 'translation_processing', 'analysis_processing'}
     for doc in documents:
         document_id = doc.get('documentId')
         if document_id:
-            # Skip permanently failed documents — don't overwrite their failed status
             current_status = doc.get('processingStatus', '')
-            if current_status in TERMINAL_FAILED_STATUSES and not status.endswith('_failed'):
-                logger.debug(f"Skipping status update for permanently failed document {document_id} ({current_status})")
+            if current_status in SKIP_STATUSES and not status.endswith('_failed'):
+                logger.debug(f"Skipping status update for document {document_id} ({current_status})")
                 continue
             try:
                 update_document_status(document_id, property_id, status, error_message)
@@ -930,6 +909,27 @@ def update_all_documents_status(
     logger.info(f"Finished updating {len(documents)} documents for property {property_id} to {status}")
 
 
+def query_all_documents_for_property(property_id: str) -> List[Dict[str, Any]]:
+    """
+    Query all documents for a property, handling DynamoDB pagination.
+    """
+    documents_table = get_documents_table()
+    documents = []
+    query_kwargs = {
+        'IndexName': 'propertyId-uploadedAt-index',
+        'KeyConditionExpression': 'propertyId = :property_id',
+        'ExpressionAttributeValues': {':property_id': property_id}
+    }
+    while True:
+        response = documents_table.query(**query_kwargs)
+        documents.extend(response.get('Items', []))
+        last_key = response.get('LastEvaluatedKey')
+        if not last_key:
+            break
+        query_kwargs['ExclusiveStartKey'] = last_key
+    return documents
+
+
 def check_all_documents_lineage_complete(property_id: str) -> bool:
     """
     Check if all documents for a property have processingStatus == 'lineage_complete'.
@@ -942,17 +942,8 @@ def check_all_documents_lineage_complete(property_id: str) -> bool:
     Returns:
         True if all documents are lineage_complete, False otherwise
     """
-    documents_table = get_documents_table()
-
     try:
-        response = documents_table.query(
-            IndexName='propertyId-uploadedAt-index',
-            KeyConditionExpression='propertyId = :property_id',
-            ExpressionAttributeValues={
-                ':property_id': property_id
-            }
-        )
-        documents = response.get('Items', [])
+        documents = query_all_documents_for_property(property_id)
     except Exception as e:
         logger.error(f"Error querying documents for property {property_id}: {str(e)}", exc_info=True)
         return False
@@ -961,27 +952,28 @@ def check_all_documents_lineage_complete(property_id: str) -> bool:
         logger.warning(f"No documents found for property {property_id}")
         return False
 
+    # Skip permanently failed, stuck-processing, and already-scored docs
+    SKIP_STATUSES = {
+        'ocr_failed', 'translation_failed', 'analysis_failed', 'lineage_failed',
+        'ocr_processing', 'translation_processing', 'analysis_processing',
+        'scoring_complete', 'scoring_failed'
+    }
+
     for doc in documents:
         status = doc.get('processingStatus', '')
+        if status in SKIP_STATUSES:
+            logger.debug(f"Document {doc.get('documentId')} has terminal/skip status ({status}), skipping in guard check")
+            continue
         if status != 'lineage_complete':
-            # Skip permanently failed documents — they should not block the pipeline
-            TERMINAL_FAILED_STATUSES = {'ocr_failed', 'translation_failed', 'analysis_failed', 'lineage_failed'}
-            if status in TERMINAL_FAILED_STATUSES:
-                logger.debug(
-                    f"Document {doc.get('documentId')} is permanently failed ({status}), skipping in guard check"
-                )
-                continue
-            logger.debug(
-                f"Document {doc.get('documentId')} has status {status}, not lineage_complete"
-            )
+            logger.debug(f"Document {doc.get('documentId')} has status {status}, not lineage_complete")
             return False
 
-    eligible = [d for d in documents if d.get('processingStatus') not in {'ocr_failed', 'translation_failed', 'analysis_failed', 'lineage_failed'}]
+    eligible = [d for d in documents if d.get('processingStatus') not in SKIP_STATUSES]
     if not eligible:
-        logger.warning(f"All documents for property {property_id} are in failed states, skipping scoring")
+        logger.warning(f"All documents for property {property_id} are in failed/terminal states, skipping scoring")
         return False
 
-    logger.info(f"All eligible documents are lineage_complete for property {property_id} ({len(documents)} total, {len(documents)-len(eligible)} permanently failed)")
+    logger.info(f"All eligible documents are lineage_complete for property {property_id} ({len(documents)} total, {len(documents)-len(eligible)} skipped)")
     return True
 
 

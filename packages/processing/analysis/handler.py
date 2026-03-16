@@ -18,6 +18,8 @@ import os
 import boto3
 import logging
 import time
+import urllib.request
+import urllib.error
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from decimal import Decimal
@@ -32,51 +34,32 @@ logger.setLevel(logging.INFO)
 
 # Environment variables
 DOCUMENTS_TABLE_NAME = os.environ.get('DOCUMENTS_TABLE_NAME', 'SatyaMool-Documents')
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 
-# Bedrock configuration (Requirement 16.3, 16.4)
-# Use on-demand inference for cost optimization (as per design doc)
-# On-demand saves ~95% during development vs provisioned throughput
-# Switch to provisioned throughput only when consistent high volume (>1M tokens/day)
-# Using Claude 3.5 Sonnet v2 - requires model access to be enabled in AWS Bedrock console
-# To enable: AWS Console → Bedrock → Model access → Enable anthropic.claude-3-5-sonnet-20241022-v2:0
-BEDROCK_MODEL_ID = 'anthropic.claude-3-5-sonnet-20241022-v2:0'
-BEDROCK_INFERENCE_MODE = 'on-demand'  # 'on-demand' or 'provisioned'
-
-# Bedrock request configuration for optimal performance
-BEDROCK_MAX_TOKENS = 4096
-BEDROCK_TEMPERATURE = 0.0  # Deterministic output for extraction
-BEDROCK_TOP_P = 1.0
-
-# Timeout configuration (Requirement 16.4: Complete AI analysis in < 30 seconds)
-BEDROCK_REQUEST_TIMEOUT = 30  # seconds
+# Gemini configuration
+GEMINI_MODEL = 'gemini-2.0-flash'
+GEMINI_API_URL = f'https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent'
 
 # AWS clients (lazy initialization)
-_bedrock_client = None
 _dynamodb = None
 _documents_table = None
 
 
-def get_bedrock_client():
-    """
-    Get or create Amazon Bedrock client with optimized configuration.
-    
-    Configures client for on-demand inference mode for cost optimization.
-    Requirements: 16.3, 16.4 - Configure Bedrock for optimal performance
-    """
-    global _bedrock_client
-    if _bedrock_client is None:
-        # Create Bedrock Runtime client with timeout configuration
-        config = boto3.session.Config(
-            read_timeout=BEDROCK_REQUEST_TIMEOUT,
-            connect_timeout=10,
-            retries={'max_attempts': 3, 'mode': 'adaptive'}
-        )
-        _bedrock_client = boto3.client('bedrock-runtime', config=config)
-        logger.info(
-            f"Initialized Bedrock client with {BEDROCK_INFERENCE_MODE} inference mode, "
-            f"timeout: {BEDROCK_REQUEST_TIMEOUT}s"
-        )
-    return _bedrock_client
+def get_dynamodb_resource():
+    """Get or create DynamoDB resource"""
+    global _dynamodb
+    if _dynamodb is None:
+        _dynamodb = boto3.resource('dynamodb')
+    return _dynamodb
+
+
+def get_documents_table():
+    """Get or create Documents table"""
+    global _documents_table
+    if _documents_table is None:
+        dynamodb = get_dynamodb_resource()
+        _documents_table = dynamodb.Table(DOCUMENTS_TABLE_NAME)
+    return _documents_table
 
 
 def get_dynamodb_resource():
@@ -219,8 +202,19 @@ def process_analysis(document_data: Dict[str, Any]) -> None:
     update_document_status(document_id, property_id, 'analysis_processing')
     
     try:
-        # Get translated text
+        # Get translated text — prefer stream payload, fall back to DynamoDB fetch
         translated_text = document_data.get('translatedText', '')
+        
+        if not translated_text:
+            # Stream events don't carry large text fields — fetch from DynamoDB
+            try:
+                documents_table = get_documents_table()
+                db_item = documents_table.get_item(
+                    Key={'documentId': document_id, 'propertyId': property_id}
+                ).get('Item', {})
+                translated_text = db_item.get('translatedText', '') or db_item.get('ocrText', '')
+            except Exception as fetch_err:
+                logger.warning(f"Could not fetch translatedText from DynamoDB: {fetch_err}")
         
         if not translated_text:
             logger.warning(f"No translated text found for document {document_id}")
@@ -242,14 +236,9 @@ def process_analysis(document_data: Dict[str, Any]) -> None:
             else:
                 logger.warning(f"Unknown document type: {document_type}")
                 extracted_data = extract_generic_document_data(translated_text, document_id)
-        except ClientError as bedrock_err:
-            error_code = bedrock_err.response.get('Error', {}).get('Code', 'Unknown')
-            if error_code == 'ValidationException' and 'Operation not allowed' in str(bedrock_err):
-                # Bedrock model access not enabled — proceed without extraction
-                logger.warning(
-                    f"Bedrock model access not enabled for document {document_id}. "
-                    f"Proceeding without AI extraction. Enable model access in AWS Bedrock console."
-                )
+        except Exception as bedrock_err:
+            if 'Operation not allowed' in str(bedrock_err):
+                logger.warning(f"AI model access not enabled for document {document_id}. Proceeding without AI extraction.")
                 extracted_data = {'document_type': document_type, 'bedrock_skipped': True}
             else:
                 raise
@@ -575,114 +564,91 @@ Extract the information accurately. If a field is not found, use null or empty a
     return extracted_data
 
 
-def invoke_bedrock_for_extraction(prompt: str, document_id: str) -> Dict[str, Any]:
+def invoke_gemini_for_extraction(prompt: str, document_id: str) -> Dict[str, Any]:
     """
-    Invoke Amazon Bedrock with Claude 3.5 Sonnet for structured data extraction.
-    
-    Optimized for performance with on-demand inference and timeout handling.
-    Requirements: 6.1, 16.3, 16.4 - Complete AI analysis in < 30 seconds
-    
-    Args:
-        prompt: Extraction prompt
-        document_id: Document ID for logging
-        
-    Returns:
-        Extracted structured data as dictionary
+    Invoke Google Gemini API for structured data extraction.
+    Uses urllib (stdlib only, no extra packages needed in Lambda).
+    Retries on 429 rate-limit errors with exponential backoff.
     """
-    logger.info(f"Invoking Bedrock for document {document_id} (mode: {BEDROCK_INFERENCE_MODE})")
-    
-    bedrock_client = get_bedrock_client()
+    logger.info(f"Invoking Gemini for document {document_id}")
     start_time = time.time()
-    
+
+    if not GEMINI_API_KEY:
+        raise ValueError("GEMINI_API_KEY environment variable not set")
+
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "temperature": 0.0,
+            "maxOutputTokens": 4096,
+        }
+    }
+
+    url = f"{GEMINI_API_URL}?key={GEMINI_API_KEY}"
+    data = json.dumps(payload).encode('utf-8')
+
+    max_retries = 3
+    for attempt in range(max_retries):
+        req = urllib.request.Request(
+            url,
+            data=data,
+            headers={'Content-Type': 'application/json'},
+            method='POST'
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=55) as resp:
+                response_body = json.loads(resp.read().decode('utf-8'))
+            break  # success
+        except urllib.error.HTTPError as e:
+            error_body = e.read().decode('utf-8')
+            if e.code == 429 and attempt < max_retries - 1:
+                wait = 45 * (attempt + 1)
+                logger.warning(f"Gemini rate limited (429), retrying in {wait}s (attempt {attempt+1}/{max_retries})")
+                time.sleep(wait)
+                continue
+            logger.error(f"Gemini HTTP error {e.code}: {error_body}")
+            raise Exception(f"Gemini API error {e.code}: {error_body}")
+    else:
+        raise Exception("Gemini API failed after all retries")
+
+    elapsed = time.time() - start_time
+
+    # Extract text from Gemini response
     try:
-        # Prepare request body for Claude 3.5 Sonnet with optimized settings
-        request_body = {
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": BEDROCK_MAX_TOKENS,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            "temperature": BEDROCK_TEMPERATURE,  # Deterministic output for extraction
-            "top_p": BEDROCK_TOP_P
-        }
-        
-        # Invoke Bedrock with on-demand inference (Requirement 16.3, 16.4)
-        response = bedrock_client.invoke_model(
-            modelId=BEDROCK_MODEL_ID,
-            body=json.dumps(request_body)
-        )
-        
-        elapsed_time = time.time() - start_time
-        
-        # Parse response
-        response_body = json.loads(response['body'].read())
-        
-        # Extract the content from Claude's response
-        content = response_body.get('content', [])
-        if content and len(content) > 0:
-            text_content = content[0].get('text', '{}')
-        else:
-            text_content = '{}'
-        
-        # Parse JSON from response
-        # Claude might wrap JSON in markdown code blocks, so clean it
-        text_content = text_content.strip()
-        if text_content.startswith('```json'):
-            text_content = text_content[7:]
-        if text_content.startswith('```'):
-            text_content = text_content[3:]
-        if text_content.endswith('```'):
-            text_content = text_content[:-3]
-        text_content = text_content.strip()
-        
+        text_content = response_body['candidates'][0]['content']['parts'][0]['text']
+    except (KeyError, IndexError) as e:
+        raise Exception(f"Unexpected Gemini response structure: {response_body}")
+
+    # Strip markdown code fences if present
+    text_content = text_content.strip()
+    if text_content.startswith('```json'):
+        text_content = text_content[7:]
+    if text_content.startswith('```'):
+        text_content = text_content[3:]
+    if text_content.endswith('```'):
+        text_content = text_content[:-3]
+    text_content = text_content.strip()
+
+    try:
         extracted_data = json.loads(text_content)
-        
-        # Add performance metadata
-        extracted_data['_bedrock_metadata'] = {
-            'inference_mode': BEDROCK_INFERENCE_MODE,
-            'model_id': BEDROCK_MODEL_ID,
-            'elapsed_seconds': elapsed_time,
-            'timestamp': datetime.utcnow().isoformat()
-        }
-        
-        logger.info(
-            f"Successfully extracted data from document {document_id} "
-            f"in {elapsed_time:.2f}s (target: <{BEDROCK_REQUEST_TIMEOUT}s)"
-        )
-        
-        # Warn if approaching timeout threshold
-        if elapsed_time > BEDROCK_REQUEST_TIMEOUT * 0.8:
-            logger.warning(
-                f"Bedrock request took {elapsed_time:.2f}s, "
-                f"approaching timeout threshold of {BEDROCK_REQUEST_TIMEOUT}s"
-            )
-        
-        return extracted_data
-        
-    except ClientError as e:
-        elapsed_time = time.time() - start_time
-        error_code = e.response.get('Error', {}).get('Code', 'Unknown')
-        logger.error(
-            f"Bedrock API error after {elapsed_time:.2f}s: {error_code} - {str(e)}"
-        )
-        raise
     except json.JSONDecodeError as e:
-        elapsed_time = time.time() - start_time
-        logger.error(
-            f"Failed to parse Bedrock response as JSON after {elapsed_time:.2f}s: {str(e)}"
-        )
-        logger.error(f"Response content: {text_content}")
-        raise
-    except Exception as e:
-        elapsed_time = time.time() - start_time
-        logger.error(
-            f"Bedrock invocation error after {elapsed_time:.2f}s: {str(e)}",
-            exc_info=True
-        )
-        raise
+        logger.error(f"Failed to parse Gemini JSON response: {text_content[:500]}")
+        raise Exception(f"Gemini returned non-JSON: {str(e)}")
+
+    extracted_data['_ai_metadata'] = {
+        'provider': 'gemini',
+        'model': GEMINI_MODEL,
+        'elapsed_seconds': round(elapsed, 2),
+        'timestamp': datetime.utcnow().isoformat()
+    }
+
+    logger.info(f"Gemini extraction complete for {document_id} in {elapsed:.2f}s")
+    return extracted_data
+
+
+# Alias so all callers work unchanged
+def invoke_bedrock_for_extraction(prompt: str, document_id: str) -> Dict[str, Any]:
+    return invoke_gemini_for_extraction(prompt, document_id)
 
 
 
@@ -734,36 +700,18 @@ Sale Consideration: {sale_consideration}
 Write the summary now:"""
 
     try:
-        bedrock_client = get_bedrock_client()
-
-        request_body = {
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 512,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            "temperature": BEDROCK_TEMPERATURE,
-            "top_p": BEDROCK_TOP_P
+        url = f"{GEMINI_API_URL}?key={GEMINI_API_KEY}"
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"temperature": 0.0, "maxOutputTokens": 512}
         }
-
-        response = bedrock_client.invoke_model(
-            modelId=BEDROCK_MODEL_ID,
-            body=json.dumps(request_body)
-        )
-
-        response_body = json.loads(response['body'].read())
-        content = response_body.get('content', [])
-        if content and len(content) > 0:
-            summary = content[0].get('text', '').strip()
-            logger.info(f"Successfully generated summary for document {document_id}")
-            return summary
-        else:
-            logger.warning(f"Empty content in Bedrock response for document {document_id}")
-            return None
-
+        data = json.dumps(payload).encode('utf-8')
+        req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'}, method='POST')
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            response_body = json.loads(resp.read().decode('utf-8'))
+        summary = response_body['candidates'][0]['content']['parts'][0]['text'].strip()
+        logger.info(f"Successfully generated summary for document {document_id}")
+        return summary
     except (ClientError, Exception) as e:
         logger.warning(f"Failed to generate summary for document {document_id}: {str(e)}")
         return None

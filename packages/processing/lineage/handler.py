@@ -187,6 +187,35 @@ def deserialize_dynamodb_item(item: Dict[str, Any]) -> Dict[str, Any]:
 
 
 
+def query_all_documents_for_property(property_id: str) -> List[Dict[str, Any]]:
+    """
+    Query all documents for a property, handling DynamoDB pagination.
+    
+    Args:
+        property_id: Property ID
+        
+    Returns:
+        List of all document items
+    """
+    documents_table = get_documents_table()
+    documents = []
+    query_kwargs = {
+        'IndexName': 'propertyId-uploadedAt-index',
+        'KeyConditionExpression': 'propertyId = :property_id',
+        'ExpressionAttributeValues': {':property_id': property_id}
+    }
+    
+    while True:
+        response = documents_table.query(**query_kwargs)
+        documents.extend(response.get('Items', []))
+        last_key = response.get('LastEvaluatedKey')
+        if not last_key:
+            break
+        query_kwargs['ExclusiveStartKey'] = last_key
+    
+    return documents
+
+
 def check_all_documents_analyzed(property_id: str) -> bool:
     """
     Check if all documents for a property have been analyzed.
@@ -197,18 +226,8 @@ def check_all_documents_analyzed(property_id: str) -> bool:
     Returns:
         True if all documents are analyzed, False otherwise
     """
-    documents_table = get_documents_table()
-    
     try:
-        response = documents_table.query(
-            IndexName='propertyId-uploadedAt-index',
-            KeyConditionExpression='propertyId = :property_id',
-            ExpressionAttributeValues={
-                ':property_id': property_id
-            }
-        )
-        
-        documents = response.get('Items', [])
+        documents = query_all_documents_for_property(property_id)
         
         if not documents:
             logger.warning(f"No documents found for property {property_id}")
@@ -217,20 +236,22 @@ def check_all_documents_analyzed(property_id: str) -> bool:
         # Check if all non-failed/non-stuck documents have analysis_complete status (Requirement 3.7)
         # Documents with *_failed status are permanently failed and should not block the pipeline
         # Documents stuck in *_processing states (Lambda retries exhausted) also should not block lineage
-        TERMINAL_FAILED_STATUSES = {
+        # Documents already past lineage (lineage_complete, scoring_complete, etc.) are also fine
+        SKIP_STATUSES = {
             'ocr_failed', 'translation_failed', 'analysis_failed',
-            'ocr_processing', 'translation_processing', 'analysis_processing'
+            'ocr_processing', 'translation_processing', 'analysis_processing',
+            'lineage_complete', 'lineage_failed', 'scoring_complete', 'scoring_failed'
         }
-        eligible_docs = [doc for doc in documents if doc.get('processingStatus') not in TERMINAL_FAILED_STATUSES]
+        eligible_docs = [doc for doc in documents if doc.get('processingStatus') not in SKIP_STATUSES]
         
         if not eligible_docs:
-            logger.warning(f"All documents for property {property_id} are in failed states, skipping lineage")
+            logger.warning(f"All documents for property {property_id} are in failed/terminal states, skipping lineage")
             return False
         
         for doc in eligible_docs:
             status = doc.get('processingStatus', '')
             if status != 'analysis_complete':
-                logger.debug(f"Document {doc.get('documentId')} has status {status}, skipping lineage")
+                logger.debug(f"Document {doc.get('documentId')} has status {status}, not ready for lineage")
                 return False
         
         failed_count = len(documents) - len(eligible_docs)
@@ -318,17 +339,7 @@ def retrieve_property_documents(property_id: str) -> List[Dict[str, Any]]:
     Returns:
         List of document data with extracted information
     """
-    documents_table = get_documents_table()
-    
-    response = documents_table.query(
-        IndexName='propertyId-uploadedAt-index',
-        KeyConditionExpression='propertyId = :property_id',
-        ExpressionAttributeValues={
-            ':property_id': property_id
-        }
-    )
-    
-    documents = response.get('Items', [])
+    documents = query_all_documents_for_property(property_id)
     
     # Filter for successfully analyzed documents
     analyzed_documents = [
@@ -1214,17 +1225,8 @@ def update_all_documents_status(
     """
     logger.info(f"Updating all documents for property {property_id} to status {status}")
 
-    documents_table = get_documents_table()
-
     try:
-        response = documents_table.query(
-            IndexName='propertyId-uploadedAt-index',
-            KeyConditionExpression='propertyId = :property_id',
-            ExpressionAttributeValues={
-                ':property_id': property_id
-            }
-        )
-        documents = response.get('Items', [])
+        documents = query_all_documents_for_property(property_id)
     except Exception as e:
         logger.error(f"Error querying documents for property {property_id}: {str(e)}", exc_info=True)
         documents = []
@@ -1232,11 +1234,12 @@ def update_all_documents_status(
     for doc in documents:
         document_id = doc.get('documentId')
         if document_id:
-            # Skip permanently failed or stuck-processing documents — don't overwrite their status
+            # Skip permanently failed, stuck-processing, or already-past-lineage documents
             # unless we're explicitly marking them as failed
             SKIP_STATUSES = {
                 'ocr_failed', 'translation_failed', 'analysis_failed',
-                'ocr_processing', 'translation_processing', 'analysis_processing'
+                'ocr_processing', 'translation_processing', 'analysis_processing',
+                'lineage_complete', 'lineage_failed', 'scoring_complete', 'scoring_failed'
             }
             current_status = doc.get('processingStatus', '')
             if current_status in SKIP_STATUSES and not status.endswith('_failed'):

@@ -585,7 +585,7 @@ def calculate_time_spans(edges: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     # Sort edges by transaction date
     sorted_edges = sorted(
         edges,
-        key=lambda e: parse_date_safely(e.get('transaction_date', ''))
+        key=lambda e: parse_date_safely(e.get('transaction_date', '')) or datetime.min
     )
     
     # Calculate time spans

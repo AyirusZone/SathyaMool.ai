@@ -352,7 +352,7 @@ def calculate_base_score(lineage_data: Dict[str, Any]) -> tuple[int, str]:
     Returns:
         Tuple of (score, explanation)
     """
-    gaps = lineage_data.get('gaps', [])
+    gaps = lineage_data.get('gaps') or []
     
     # Check if chain is complete (no gaps)
     if not gaps:
@@ -373,7 +373,7 @@ def calculate_gap_penalty(lineage_data: Dict[str, Any]) -> tuple[int, str]:
     Returns:
         Tuple of (penalty, explanation)
     """
-    gaps = lineage_data.get('gaps', [])
+    gaps = lineage_data.get('gaps') or []
     
     if not gaps:
         return (0, "No gaps detected in ownership chain")
@@ -469,7 +469,7 @@ def calculate_survey_number_penalty(documents: List[Dict[str, Any]]) -> tuple[in
     
     for doc in documents:
         extracted_data = doc.get('extractedData') or {}
-        doc_survey_numbers = extracted_data.get('survey_numbers', [])
+        doc_survey_numbers = extracted_data.get('survey_numbers') or []
         
         if doc_survey_numbers:
             # Normalize survey numbers
@@ -517,7 +517,7 @@ def calculate_ec_bonus(documents: List[Dict[str, Any]]) -> tuple[int, str]:
     
     # Check if EC data matches Sale Deed data
     ec_data = (ec_docs[0].get('extractedData') or {})
-    ec_transactions = ec_data.get('transaction_entries', [])
+    ec_transactions = ec_data.get('transaction_entries') or []
     
     if not ec_transactions:
         return (0, "Encumbrance Certificate provided but contains no transaction entries")
@@ -603,7 +603,7 @@ def calculate_succession_bonus(documents: List[Dict[str, Any]]) -> tuple[int, st
     
     for doc in documents:
         extracted_data = doc.get('extractedData') or {}
-        family_relationships = extracted_data.get('family_relationships', [])
+        family_relationships = extracted_data.get('family_relationships') or []
         
         # Check for legal heir indicators
         legal_heir_keywords = ['legal heir', 'heir certificate', 'succession certificate', 'will', 'testament']
@@ -634,7 +634,8 @@ def normalize_survey_number(survey_number: str) -> Optional[str]:
     if not survey_number:
         return None
     
-    # Remove whitespace and convert to lowercase
+    # Coerce to string (DynamoDB may return Decimal for numeric survey numbers)
+    survey_number = str(survey_number)
     normalized = survey_number.strip().lower()
     
     # Remove common prefixes

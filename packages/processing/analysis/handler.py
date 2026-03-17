@@ -34,10 +34,10 @@ logger.setLevel(logging.INFO)
 
 # Environment variables
 DOCUMENTS_TABLE_NAME = os.environ.get('DOCUMENTS_TABLE_NAME', 'SatyaMool-Documents')
-GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', os.environ.get('OPENROUTER_API_KEY', ''))
 
-# Groq configuration
-GROQ_MODEL = 'llama-3.3-70b-versatile'
+# Groq configuration (resets daily at midnight UTC)
+GROQ_MODEL = 'llama-3.1-8b-instant'
 GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
 
 # AWS clients (lazy initialization)
@@ -220,6 +220,12 @@ def process_analysis(document_data: Dict[str, Any]) -> None:
             logger.warning(f"No translated text found for document {document_id}")
             update_document_status(document_id, property_id, 'analysis_complete')
             return
+
+        # Truncate very long documents to avoid LLM context/token limits
+        MAX_TEXT_CHARS = 8000
+        if len(translated_text) > MAX_TEXT_CHARS:
+            logger.warning(f"Truncating document {document_id} from {len(translated_text)} to {MAX_TEXT_CHARS} chars")
+            translated_text = translated_text[:MAX_TEXT_CHARS]
         
         # Detect document type
         document_type = detect_document_type(translated_text, document_data)
@@ -580,7 +586,7 @@ def invoke_gemini_for_extraction(prompt: str, document_id: str) -> Dict[str, Any
         "model": GROQ_MODEL,
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.0,
-        "max_tokens": 4096,
+        "max_tokens": 8192,
     }
 
     data = json.dumps(payload).encode('utf-8')
@@ -603,11 +609,10 @@ def invoke_gemini_for_extraction(prompt: str, document_id: str) -> Dict[str, Any
             break  # success
         except urllib.error.HTTPError as e:
             error_body = e.read().decode('utf-8')
-            if e.code == 429 and attempt < max_retries - 1:
-                wait = 30 * (attempt + 1)
-                logger.warning(f"Groq rate limited (429), retrying in {wait}s (attempt {attempt+1}/{max_retries})")
-                time.sleep(wait)
-                continue
+            if e.code == 429:
+                # Always fail fast on any 429 — let DynamoDB stream retry naturally
+                logger.error(f"Groq rate limited (429), failing fast to avoid Lambda timeout")
+                raise Exception(f"Groq API error 429: rate limited, retry later")
             logger.error(f"Groq HTTP error {e.code}: {error_body}")
             raise Exception(f"Groq API error {e.code}: {error_body}")
     else:

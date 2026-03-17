@@ -15,6 +15,7 @@ import boto3
 import logging
 from typing import Dict, Any, List, Optional, Set, Tuple
 from datetime import datetime, timezone
+from decimal import Decimal
 from collections import defaultdict, deque
 from botocore.exceptions import ClientError
 
@@ -341,11 +342,21 @@ def retrieve_property_documents(property_id: str) -> List[Dict[str, Any]]:
     """
     documents = query_all_documents_for_property(property_id)
     
-    # Filter for successfully analyzed documents
+    # Filter for successfully analyzed documents (any status past analysis)
+    ANALYZED_STATUSES = {
+        'analysis_complete', 'lineage_complete', 'lineage_failed',
+        'scoring_complete', 'scoring_failed'
+    }
     analyzed_documents = [
         doc for doc in documents
-        if doc.get('processingStatus') == 'analysis_complete'
+        if doc.get('processingStatus') in ANALYZED_STATUSES
         and doc.get('extractedData')
+        and (
+            doc.get('extractedData', {}).get('seller_name')
+            or doc.get('extractedData', {}).get('buyer_name')
+            or doc.get('extractedData', {}).get('original_owner_name')
+            or doc.get('extractedData', {}).get('transactions')
+        )
     ]
     
     logger.info(f"Retrieved {len(analyzed_documents)} analyzed documents for property {property_id}")
@@ -601,6 +612,20 @@ def calculate_time_spans(edges: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             }
     
     return sorted_edges
+
+
+def convert_floats_to_decimal(obj: Any) -> Any:
+    """
+    Recursively convert all float values to Decimal for DynamoDB compatibility.
+    DynamoDB's boto3 resource client does not accept Python float types.
+    """
+    if isinstance(obj, float):
+        return Decimal(str(obj))
+    elif isinstance(obj, dict):
+        return {k: convert_floats_to_decimal(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_floats_to_decimal(v) for v in obj]
+    return obj
 
 
 def parse_date_safely(date_str: str) -> Optional[datetime]:
@@ -1118,6 +1143,9 @@ def store_lineage_graph(property_id: str, graph_data: Dict[str, Any]) -> None:
         'updatedAt': datetime.now(timezone.utc).isoformat()
     }
     
+    # DynamoDB does not support float — convert all floats to Decimal recursively
+    lineage_item = convert_floats_to_decimal(lineage_item)
+
     # Store in DynamoDB
     lineage_table.put_item(Item=lineage_item)
     

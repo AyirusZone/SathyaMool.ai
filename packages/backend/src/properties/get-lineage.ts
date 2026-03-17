@@ -28,6 +28,7 @@ interface Node {
     date?: string;
     verificationStatus: 'verified' | 'gap' | 'warning';
     documentId?: string;
+    isCurrentOwner?: boolean;
     metadata?: any;
   };
   position: { x: number; y: number };
@@ -210,9 +211,17 @@ function transformToReactFlow(lineageData: any, documentMap: Map<string, any>, d
   const nodes: Node[] = [];
   const edges: Edge[] = [];
 
-  // Transform nodes
+  // Transform nodes — lay out as a vertical chain sorted by date
   const rawNodes = lineageData.nodes || [];
-  rawNodes.forEach((node: any, index: number) => {
+
+  // Sort nodes by acquisition_date for proper chain ordering
+  const sortedNodes = [...rawNodes].sort((a: any, b: any) => {
+    const da = a.acquisition_date || a.grant_date || a.date || '';
+    const db = b.acquisition_date || b.grant_date || b.date || '';
+    return da.localeCompare(db);
+  });
+
+  sortedNodes.forEach((node: any, index: number) => {
     // Determine verification status
     let verificationStatus: 'verified' | 'gap' | 'warning' = 'verified';
     
@@ -226,40 +235,41 @@ function transformToReactFlow(lineageData: any, documentMap: Map<string, any>, d
     const doc = node.documentId ? documentMap.get(node.documentId) : null;
 
     nodes.push({
-      id: node.id || `node-${index}`,
-      type: node.type || 'default',
+      id: String(node.id ?? `node-${index}`),
+      type: node.isGap ? 'gap' : 'owner',
       data: {
         label: node.name || node.label || 'Unknown',
         name: node.name || 'Unknown',
-        date: node.date || node.transactionDate,
+        date: node.acquisition_date || node.grant_date || node.date || node.transactionDate,
         verificationStatus,
         documentId: node.documentId,
+        isCurrentOwner: index === sortedNodes.length - 1,
         metadata: {
           ...node,
           documentType: doc?.documentType,
           confidence: doc?.confidence,
         },
       },
-      position: node.position || { x: index * 200, y: 0 }, // Default layout
+      position: node.position || { x: 300, y: index * 160 }, // Vertical chain layout
     });
   });
 
-  // Transform edges
+  // Transform edges — ensure source/target are strings matching node IDs
   const rawEdges = lineageData.edges || [];
   rawEdges.forEach((edge: any, index: number) => {
     const doc = edge.documentId ? documentMap.get(edge.documentId) : null;
 
     edges.push({
       id: edge.id || `edge-${index}`,
-      source: edge.source || edge.from,
-      target: edge.target || edge.to,
+      source: String(edge.source ?? edge.from),
+      target: String(edge.target ?? edge.to),
       type: edge.type || 'default',
       data: {
-        label: edge.label || edge.transferType,
-        transferType: edge.transferType || edge.relationshipType,
-        date: edge.date || edge.transactionDate,
-        documentId: edge.documentId,
-        saleConsideration: edge.saleConsideration,
+        label: edge.label || edge.transferType || edge.relationship_type,
+        transferType: edge.transferType || edge.relationship_type || edge.relationshipType || 'sale',
+        date: edge.date || edge.transaction_date || edge.transactionDate,
+        documentId: edge.document_id || edge.documentId,
+        saleConsideration: edge.sale_consideration || edge.saleConsideration,
         metadata: {
           ...edge,
           documentType: doc?.documentType,
